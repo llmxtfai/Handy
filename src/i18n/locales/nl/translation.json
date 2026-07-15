@@ -160,6 +160,9 @@
     "general": {
       "title": "Algemeen",
       "shortcut": {
+        "set": "Sneltoets instellen",
+        "clear": "{{name}} wissen",
+        "reset": "{{name}} herstellen",
         "title": "Sneltoetsen",
         "description": "Configureer sneltoetsen om spraak-naar-tekst-opnames te starten",
         "loading": "Sneltoetsen laden...",
@@ -167,9 +170,17 @@
         "notFound": "Sneltoets niet gevonden",
         "pressKeys": "Druk op toetsen...",
         "bindings": {
+          "push_to_talk": {
+            "name": "Sneltoets voor indrukken en spreken",
+            "description": "Ingedrukt houden om op te nemen en loslaten om te transcriberen."
+          },
+          "push_to_talk_with_post_process": {
+            "name": "Sneltoets voor indrukken en spreken met naverwerking",
+            "description": "Ingedrukt houden om op te nemen en loslaten om te transcriberen en AI-naverwerking toe te passen."
+          },
           "transcribe": {
             "name": "Sneltoets voor dicteren",
-            "description": "De sneltoets om je stem op te nemen en te transcriberen."
+            "description": "Druk eenmaal om de opname te starten en nogmaals om te transcriberen."
           },
           "cancel": {
             "name": "Sneltoets voor annuleren",
@@ -177,10 +188,12 @@
           },
           "transcribe_with_post_process": {
             "name": "Sneltoets voor naverwerking",
-            "description": "Optioneel: Een specifieke sneltoets die altijd AI-naverwerking toepast op je transcriptie."
+            "description": "Druk eenmaal om de opname te starten en nogmaals om te transcriberen met AI-naverwerking."
           }
         },
         "errors": {
+          "finalNormalBindingRequired": "Stel een andere opnamesneltoets in voordat je deze wist.",
+          "recordingInProgress": "Sneltoetsen kunnen niet worden gewijzigd terwijl Handy opneemt of transcribeert.",
           "restore": "Herstellen van originele sneltoets mislukt",
           "set": "Instellen van sneltoets mislukt: {{error}}",
           "reset": "Sneltoets terugzetten naar standaardwaarde mislukt"
@@ -195,7 +208,7 @@
       },
       "pushToTalk": {
         "label": "Push-to-talk",
-        "description": "Ingedrukt houden om op te nemen, loslaten om te stoppen"
+        "description": "Ingedrukt houden om op te nemen en loslaten om te transcriberen."
       }
     },
     "models": {

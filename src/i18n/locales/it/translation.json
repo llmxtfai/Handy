@@ -178,6 +178,9 @@
     "general": {
       "title": "Generale",
       "shortcut": {
+        "set": "Imposta scorciatoia",
+        "clear": "Cancella {{name}}",
+        "reset": "Reimposta {{name}}",
         "title": "Scorciatoie di Handy",
         "description": "Configura le scorciatoie per attivare la trascrizione vocale",
         "loading": "Caricamento delle scorciatoie...",
@@ -185,9 +188,17 @@
         "notFound": "Scorciatoia non trovata",
         "pressKeys": "Premi i tasti...",
         "bindings": {
+          "push_to_talk": {
+            "name": "Scorciatoia Premi per parlare",
+            "description": "Tieni premuto per registrare e rilascia per trascrivere."
+          },
+          "push_to_talk_with_post_process": {
+            "name": "Scorciatoia Premi per parlare con post-elaborazione",
+            "description": "Tieni premuto per registrare, poi rilascia per trascrivere e applicare la post-elaborazione IA."
+          },
           "transcribe": {
             "name": "Scorciatoia Trascrizione",
-            "description": "La scorciatoia da tastiera per registrare e trascrivere la tua voce."
+            "description": "Premi una volta per avviare la registrazione e di nuovo per trascrivere."
           },
           "cancel": {
             "name": "Scorciatoia Annulla",
@@ -195,10 +206,12 @@
           },
           "transcribe_with_post_process": {
             "name": "Tasto di post-elaborazione",
-            "description": "Facoltativo: Un tasto di scelta rapida dedicato che applica sempre la post-elaborazione IA alla trascrizione."
+            "description": "Premi una volta per avviare la registrazione e di nuovo per trascrivere con la post-elaborazione IA."
           }
         },
         "errors": {
+          "finalNormalBindingRequired": "Assegna un’altra scorciatoia di registrazione prima di cancellare questa.",
+          "recordingInProgress": "Le scorciatoie non possono essere modificate mentre Handy registra o trascrive.",
           "restore": "Errore nel ripristino della scorciatoia originale",
           "set": "Errore nella configurazione della scorciatoia: {{error}}",
           "reset": "Errore nella reinizializzazione della scorciatoia al valore originale"
@@ -213,7 +226,7 @@
       },
       "pushToTalk": {
         "label": "Premi per Parlare",
-        "description": "Tieni premuto per parlare, rilascia per interrompere"
+        "description": "Tieni premuto per registrare e rilascia per trascrivere."
       }
     },
     "sound": {

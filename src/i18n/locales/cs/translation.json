@@ -178,6 +178,9 @@
     "general": {
       "title": "Obecné",
       "shortcut": {
+        "set": "Nastavit zkratku",
+        "clear": "Vymazat {{name}}",
+        "reset": "Obnovit {{name}}",
         "title": "Zkratky Handy",
         "description": "Nastavte klávesové zkratky pro spuštění nahrávání řeči na text",
         "loading": "Načítám zkratky...",
@@ -185,9 +188,17 @@
         "notFound": "Zkratka nenalezena",
         "pressKeys": "Stiskněte klávesy...",
         "bindings": {
+          "push_to_talk": {
+            "name": "Zkratka Push to Talk",
+            "description": "Podržte pro nahrávání a uvolněte pro přepis."
+          },
+          "push_to_talk_with_post_process": {
+            "name": "Zkratka Push to Talk s následným zpracováním",
+            "description": "Podržte pro nahrávání a uvolněte pro přepis s následným zpracováním pomocí AI."
+          },
           "transcribe": {
             "name": "Zkratka přepisu",
-            "description": "Klávesová zkratka pro nahrávání a přepis vašeho hlasu."
+            "description": "Jedním stisknutím spusťte nahrávání a dalším spusťte přepis."
           },
           "cancel": {
             "name": "Zkratka zrušení",
@@ -195,10 +206,12 @@
           },
           "transcribe_with_post_process": {
             "name": "Klávesa pro následné zpracování",
-            "description": "Volitelné: Vyhrazená klávesová zkratka, která vždy použije AI následné zpracování na váš přepis."
+            "description": "Jedním stisknutím spusťte nahrávání a dalším přepis s následným zpracováním pomocí AI."
           }
         },
         "errors": {
+          "finalNormalBindingRequired": "Před vymazáním této zkratky nastavte jinou zkratku pro nahrávání.",
+          "recordingInProgress": "Zkratky nelze měnit, když Handy nahrává nebo přepisuje.",
           "restore": "Nepodařilo se obnovit původní zkratku",
           "set": "Nepodařilo se nastavit zkratku: {{error}}",
           "reset": "Nepodařilo se vrátit zkratku na původní hodnotu"
@@ -213,7 +226,7 @@
       },
       "pushToTalk": {
         "label": "Stisk a mluv",
-        "description": "Podržte pro nahrávání, uvolněte pro zastavení"
+        "description": "Podržte pro nahrávání a uvolněte pro přepis."
       }
     },
     "sound": {

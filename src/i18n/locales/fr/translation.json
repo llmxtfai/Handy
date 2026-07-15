@@ -178,6 +178,9 @@
     "general": {
       "title": "Général",
       "shortcut": {
+        "set": "Définir le raccourci",
+        "clear": "Effacer {{name}}",
+        "reset": "Réinitialiser {{name}}",
         "title": "Raccourcis Handy",
         "description": "Configurer les raccourcis clavier pour déclencher l'enregistrement de la reconnaissance vocale",
         "loading": "Chargement des raccourcis...",
@@ -185,9 +188,17 @@
         "notFound": "Raccourci non trouvé",
         "pressKeys": "Appuyez sur les touches...",
         "bindings": {
+          "push_to_talk": {
+            "name": "Raccourci Appuyer pour parler",
+            "description": "Maintenez pour enregistrer et relâchez pour transcrire."
+          },
+          "push_to_talk_with_post_process": {
+            "name": "Raccourci Appuyer pour parler avec post-traitement",
+            "description": "Maintenez pour enregistrer, puis relâchez pour transcrire et appliquer le post-traitement par IA."
+          },
           "transcribe": {
             "name": "Raccourci de Transcription",
-            "description": "Le raccourci clavier pour enregistrer et transcrire votre voix."
+            "description": "Appuyez une fois pour démarrer l’enregistrement, puis à nouveau pour transcrire."
           },
           "cancel": {
             "name": "Raccourci d'Annulation",
@@ -195,10 +206,12 @@
           },
           "transcribe_with_post_process": {
             "name": "Raccourci de post-traitement",
-            "description": "Facultatif : Un raccourci dédié qui applique toujours le post-traitement IA à votre transcription."
+            "description": "Appuyez une fois pour démarrer l’enregistrement, puis à nouveau pour transcrire avec le post-traitement par IA."
           }
         },
         "errors": {
+          "finalNormalBindingRequired": "Définissez un autre raccourci d’enregistrement avant d’effacer celui-ci.",
+          "recordingInProgress": "Les raccourcis ne peuvent pas être modifiés pendant que Handy enregistre ou transcrit.",
           "restore": "Échec de la restauration du raccourci original",
           "set": "Échec de la définition du raccourci : {{error}}",
           "reset": "Échec de la réinitialisation du raccourci à sa valeur d'origine"
@@ -213,7 +226,7 @@
       },
       "pushToTalk": {
         "label": "Appuyer pour parler",
-        "description": "Maintenez pour enregistrer, relâchez pour arrêter"
+        "description": "Maintenez pour enregistrer et relâchez pour transcrire."
       }
     },
     "sound": {

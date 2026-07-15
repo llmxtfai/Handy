@@ -160,6 +160,9 @@
     "general": {
       "title": "一般",
       "shortcut": {
+        "set": "設定快捷鍵",
+        "clear": "清除{{name}}",
+        "reset": "重設{{name}}",
         "title": "Handy 快捷鍵",
         "description": "設定啟動語音轉文字錄製的鍵盤快捷鍵",
         "loading": "載入快捷鍵中...",
@@ -167,9 +170,17 @@
         "notFound": "未找到快捷鍵",
         "pressKeys": "請按鍵...",
         "bindings": {
+          "push_to_talk": {
+            "name": "按住說話快捷鍵",
+            "description": "按住以錄音，放開後轉錄。"
+          },
+          "push_to_talk_with_post_process": {
+            "name": "含後處理的按住說話快捷鍵",
+            "description": "按住以錄音，放開後轉錄並套用 AI 後處理。"
+          },
           "transcribe": {
             "name": "轉錄快捷鍵",
-            "description": "用於錄製和轉錄語音的鍵盤快捷鍵"
+            "description": "按一次開始錄音，再按一次進行轉錄。"
           },
           "cancel": {
             "name": "取消快捷鍵",
@@ -177,10 +188,12 @@
           },
           "transcribe_with_post_process": {
             "name": "後處理快捷鍵",
-            "description": "可選：專用快捷鍵，使用時一律對轉錄結果套用 AI 後處理"
+            "description": "按一次開始錄音，再按一次進行轉錄並套用 AI 後處理。"
           }
         },
         "errors": {
+          "finalNormalBindingRequired": "請先設定另一個錄音快捷鍵，再清除此快捷鍵。",
+          "recordingInProgress": "Handy 正在錄音或轉錄時無法變更快捷鍵。",
           "restore": "無法還原原始快捷鍵",
           "set": "無法設定快捷鍵: {{error}}",
           "reset": "無法將快捷鍵重設為原始值"
@@ -195,7 +208,7 @@
       },
       "pushToTalk": {
         "label": "按住說話",
-        "description": "按住錄製，放開停止"
+        "description": "按住以錄音，放開後轉錄。"
       }
     },
     "models": {

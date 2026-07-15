@@ -178,6 +178,9 @@
     "general": {
       "title": "Allgemein",
       "shortcut": {
+        "set": "Tastenkürzel festlegen",
+        "clear": "{{name}} löschen",
+        "reset": "{{name}} zurücksetzen",
         "title": "Handy-Tastenkürzel",
         "description": "Tastenkürzel für die Sprachaufnahme konfigurieren",
         "loading": "Tastenkürzel werden geladen...",
@@ -185,9 +188,17 @@
         "notFound": "Tastenkürzel nicht gefunden",
         "pressKeys": "Tasten drücken...",
         "bindings": {
+          "push_to_talk": {
+            "name": "Push-to-Talk-Tastenkürzel",
+            "description": "Zum Aufnehmen gedrückt halten und zum Transkribieren loslassen."
+          },
+          "push_to_talk_with_post_process": {
+            "name": "Push-to-Talk-Tastenkürzel mit Nachbearbeitung",
+            "description": "Zum Aufnehmen gedrückt halten und zum Transkribieren mit KI-Nachbearbeitung loslassen."
+          },
           "transcribe": {
             "name": "Transkriptions-Tastenkürzel",
-            "description": "Das Tastenkürzel zum Aufnehmen und Transkribieren deiner Stimme."
+            "description": "Einmal drücken, um die Aufnahme zu starten, und erneut drücken, um zu transkribieren."
           },
           "cancel": {
             "name": "Abbrechen-Tastenkürzel",
@@ -195,10 +206,12 @@
           },
           "transcribe_with_post_process": {
             "name": "Nachbearbeitungs-Tastenkürzel",
-            "description": "Optional: Ein dediziertes Tastenkürzel, das immer die KI-Nachbearbeitung auf deine Transkription anwendet."
+            "description": "Einmal drücken, um die Aufnahme zu starten, und erneut drücken, um mit KI-Nachbearbeitung zu transkribieren."
           }
         },
         "errors": {
+          "finalNormalBindingRequired": "Lege ein anderes Aufnahme-Tastenkürzel fest, bevor du dieses löschst.",
+          "recordingInProgress": "Tastenkürzel können nicht geändert werden, während Handy aufnimmt oder transkribiert.",
           "restore": "Ursprüngliches Tastenkürzel konnte nicht wiederhergestellt werden",
           "set": "Tastenkürzel konnte nicht gesetzt werden: {{error}}",
           "reset": "Tastenkürzel konnte nicht auf Originalwert zurückgesetzt werden"
@@ -213,7 +226,7 @@
       },
       "pushToTalk": {
         "label": "Push-to-Talk",
-        "description": "Gedrückt halten zum Aufnehmen, loslassen zum Stoppen"
+        "description": "Zum Aufnehmen gedrückt halten und zum Transkribieren loslassen."
       }
     },
     "sound": {

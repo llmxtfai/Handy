@@ -178,6 +178,9 @@
     "general": {
       "title": "Ogólne",
       "shortcut": {
+        "set": "Ustaw skrót",
+        "clear": "Wyczyść {{name}}",
+        "reset": "Zresetuj {{name}}",
         "title": "Skróty Handy",
         "description": "Skonfiguruj skróty klawiaturowe do uruchamiania nagrywania mowy",
         "loading": "Wczytywanie skrótów...",
@@ -185,9 +188,17 @@
         "notFound": "Nie znaleziono skrótu",
         "pressKeys": "Naciśnij klawisze...",
         "bindings": {
+          "push_to_talk": {
+            "name": "Skrót Naciśnij, aby mówić",
+            "description": "Przytrzymaj, aby nagrywać, i puść, aby transkrybować."
+          },
+          "push_to_talk_with_post_process": {
+            "name": "Skrót Naciśnij, aby mówić z postprocessingiem",
+            "description": "Przytrzymaj, aby nagrywać, i puść, aby transkrybować oraz zastosować postprocessing AI."
+          },
           "transcribe": {
             "name": "Skrót transkrypcji",
-            "description": "Skrót klawiaturowy do nagrywania i transkrypcji głosu."
+            "description": "Naciśnij raz, aby rozpocząć nagrywanie, i ponownie, aby transkrybować."
           },
           "cancel": {
             "name": "Skrót anulowania",
@@ -195,10 +206,12 @@
           },
           "transcribe_with_post_process": {
             "name": "Skrót postprocessingu",
-            "description": "Opcjonalnie: Dedykowany skrót klawiszowy, który zawsze stosuje postprocessing AI do transkrypcji."
+            "description": "Naciśnij raz, aby rozpocząć nagrywanie, i ponownie, aby transkrybować z postprocessingiem AI."
           }
         },
         "errors": {
+          "finalNormalBindingRequired": "Ustaw inny skrót nagrywania przed wyczyszczeniem tego.",
+          "recordingInProgress": "Nie można zmieniać skrótów, gdy Handy nagrywa lub transkrybuje.",
           "restore": "Nie udało się przywrócić oryginalnego skrótu",
           "set": "Nie udało się ustawić skrótu: {{error}}",
           "reset": "Nie udało się zresetować skrótu do wartości domyślnej"
@@ -213,7 +226,7 @@
       },
       "pushToTalk": {
         "label": "Push To Talk",
-        "description": "Przytrzymaj, aby nagrywać, puść, aby zatrzymać"
+        "description": "Przytrzymaj, aby nagrywać, i puść, aby transkrybować."
       }
     },
     "sound": {

@@ -166,24 +166,37 @@
         "none": "No shortcuts configured",
         "notFound": "Shortcut not found",
         "pressKeys": "Press keys...",
+        "set": "Set shortcut",
+        "clear": "Clear {{name}}",
+        "reset": "Reset {{name}}",
         "bindings": {
           "transcribe": {
             "name": "Transcribe Shortcut",
-            "description": "The keyboard shortcut to record and transcribe your voice."
+            "description": "Press once to start recording, then press again to transcribe."
+          },
+          "push_to_talk": {
+            "name": "Push To Talk Shortcut",
+            "description": "Hold to record and release to transcribe."
           },
           "cancel": {
             "name": "Cancel Shortcut",
             "description": "The keyboard shortcut to cancel the current recording."
           },
           "transcribe_with_post_process": {
-            "name": "Post-Processing Hotkey",
-            "description": "Optional: A dedicated hotkey that always applies AI post-processing to your transcription."
+            "name": "Post-Processing Shortcut",
+            "description": "Press once to start recording, then press again to transcribe and apply AI post-processing."
+          },
+          "push_to_talk_with_post_process": {
+            "name": "Push To Talk with Post-Processing Shortcut",
+            "description": "Hold to record, then release to transcribe and apply AI post-processing."
           }
         },
         "errors": {
           "restore": "Failed to restore original shortcut",
           "set": "Failed to set shortcut: {{error}}",
-          "reset": "Failed to reset shortcut to original value"
+          "reset": "Failed to reset shortcut to original value",
+          "finalNormalBindingRequired": "Assign another recording shortcut before clearing this one.",
+          "recordingInProgress": "Shortcuts can’t be changed while Handy is recording or transcribing."
         }
       },
       "language": {
@@ -195,7 +208,7 @@
       },
       "pushToTalk": {
         "label": "Push To Talk",
-        "description": "Hold to record, release to stop"
+        "description": "Hold the assigned shortcut to record and release it to transcribe."
       }
     },
     "models": {

@@ -178,6 +178,9 @@
     "general": {
       "title": "General",
       "shortcut": {
+        "set": "Asignar atajo",
+        "clear": "Borrar {{name}}",
+        "reset": "Restablecer {{name}}",
         "title": "Atajos de Handy",
         "description": "Configura atajos de teclado para activar la grabación de voz a texto",
         "loading": "Cargando atajos...",
@@ -185,9 +188,17 @@
         "notFound": "Atajo no encontrado",
         "pressKeys": "Presiona teclas...",
         "bindings": {
+          "push_to_talk": {
+            "name": "Atajo de pulsar para hablar",
+            "description": "Mantén pulsado para grabar y suelta para transcribir."
+          },
+          "push_to_talk_with_post_process": {
+            "name": "Atajo de pulsar para hablar con posprocesamiento",
+            "description": "Mantén pulsado para grabar y suelta para transcribir y aplicar posprocesamiento con IA."
+          },
           "transcribe": {
             "name": "Atajo de Transcripción",
-            "description": "El atajo de teclado para grabar y transcribir tu voz."
+            "description": "Pulsa una vez para empezar a grabar y otra vez para transcribir."
           },
           "cancel": {
             "name": "Atajo de Cancelar",
@@ -195,10 +206,12 @@
           },
           "transcribe_with_post_process": {
             "name": "Tecla de Post Procesamiento",
-            "description": "Opcional: Una tecla de acceso rápido dedicada que siempre aplica post procesamiento con IA a tu transcripción."
+            "description": "Pulsa una vez para empezar a grabar y otra vez para transcribir y aplicar posprocesamiento con IA."
           }
         },
         "errors": {
+          "finalNormalBindingRequired": "Asigna otro atajo de grabación antes de borrar este.",
+          "recordingInProgress": "Los atajos no se pueden cambiar mientras Handy graba o transcribe.",
           "restore": "Error al restaurar el atajo original",
           "set": "Error al configurar el atajo: {{error}}",
           "reset": "Error al restablecer el atajo al valor original"
@@ -213,7 +226,7 @@
       },
       "pushToTalk": {
         "label": "Presionar para Hablar",
-        "description": "Mantén presionado para grabar, suelta para detener"
+        "description": "Mantén pulsado para grabar y suelta para transcribir."
       }
     },
     "sound": {

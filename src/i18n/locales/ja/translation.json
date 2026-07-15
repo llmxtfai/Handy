@@ -178,6 +178,9 @@
     "general": {
       "title": "一般",
       "shortcut": {
+        "set": "ショートカットを設定",
+        "clear": "{{name}}を消去",
+        "reset": "{{name}}をリセット",
         "title": "Handy ショートカット",
         "description": "音声録音を開始するキーボードショートカットを設定",
         "loading": "ショートカットを読み込み中…",
@@ -185,9 +188,17 @@
         "notFound": "ショートカットが見つかりません",
         "pressKeys": "キーを押してください…",
         "bindings": {
+          "push_to_talk": {
+            "name": "プッシュ・トゥ・トークのショートカット",
+            "description": "押している間録音し、離すと文字起こしします。"
+          },
+          "push_to_talk_with_post_process": {
+            "name": "後処理付きプッシュ・トゥ・トークのショートカット",
+            "description": "押している間録音し、離すと文字起こしして AI 後処理を適用します。"
+          },
           "transcribe": {
             "name": "文字起こしのショートカット",
-            "description": "音声を録音して文字起こしするためのキーボードショートカット。"
+            "description": "1 回押すと録音を開始し、もう一度押すと文字起こしします。"
           },
           "cancel": {
             "name": "キャンセルのショートカット",
@@ -195,10 +206,12 @@
           },
           "transcribe_with_post_process": {
             "name": "後処理のショートカット",
-            "description": "文字起こしに常に AI 後処理を適用するキーボードショートカット。 (任意)"
+            "description": "1 回押すと録音を開始し、もう一度押すと文字起こしして AI 後処理を適用します。"
           }
         },
         "errors": {
+          "finalNormalBindingRequired": "このショートカットを消去する前に、別の録音ショートカットを設定してください。",
+          "recordingInProgress": "Handy が録音中または文字起こし中はショートカットを変更できません。",
           "restore": "元のショートカットを復元できませんでした",
           "set": "ショートカットを設定できませんでした: {{error}}",
           "reset": "ショートカットを元の値にリセットできませんでした"
@@ -213,7 +226,7 @@
       },
       "pushToTalk": {
         "label": "プッシュツートーク",
-        "description": "押し続けて録音、離して停止"
+        "description": "押している間録音し、離すと文字起こしします。"
       }
     },
     "sound": {

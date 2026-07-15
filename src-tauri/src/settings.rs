@@ -347,8 +347,6 @@ pub struct AppSettings {
     /// default bindings for any missing keys before the settings are used.
     #[serde(default)]
     pub bindings: HashMap<String, ShortcutBinding>,
-    #[serde(default = "default_push_to_talk")]
-    pub push_to_talk: bool,
     #[serde(default)]
     pub audio_feedback: bool,
     #[serde(default = "default_audio_feedback_volume")]
@@ -470,14 +468,10 @@ fn default_model() -> String {
     "".to_string()
 }
 
-const CURRENT_SETTINGS_SCHEMA_VERSION: u32 = 1;
+const CURRENT_SETTINGS_SCHEMA_VERSION: u32 = 2;
 
 fn default_settings_schema_version() -> u32 {
     CURRENT_SETTINGS_SCHEMA_VERSION
-}
-
-fn default_push_to_talk() -> bool {
-    true
 }
 
 fn default_always_on_microphone() -> bool {
@@ -784,15 +778,31 @@ fn ensure_post_process_defaults(settings: &mut AppSettings) -> bool {
 
 pub const SETTINGS_STORE_PATH: &str = "settings_store.json";
 
-pub fn get_default_settings() -> AppSettings {
+fn historical_transcribe_shortcut() -> &'static str {
     #[cfg(target_os = "windows")]
-    let default_shortcut = "ctrl+space";
+    return "ctrl+space";
     #[cfg(target_os = "macos")]
-    let default_shortcut = "option+space";
+    return "option+space";
     #[cfg(target_os = "linux")]
-    let default_shortcut = "ctrl+space";
+    return "ctrl+space";
     #[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
-    let default_shortcut = "alt+space";
+    return "alt+space";
+}
+
+fn historical_post_process_shortcut() -> &'static str {
+    #[cfg(target_os = "windows")]
+    return "ctrl+shift+space";
+    #[cfg(target_os = "macos")]
+    return "option+shift+space";
+    #[cfg(target_os = "linux")]
+    return "ctrl+shift+space";
+    #[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
+    return "alt+shift+space";
+}
+
+pub fn get_default_settings() -> AppSettings {
+    let default_shortcut = historical_transcribe_shortcut();
+    let default_post_process_shortcut = historical_post_process_shortcut();
 
     let mut bindings = HashMap::new();
     bindings.insert(
@@ -801,18 +811,20 @@ pub fn get_default_settings() -> AppSettings {
             id: "transcribe".to_string(),
             name: "Transcribe".to_string(),
             description: "Converts your speech into text.".to_string(),
+            default_binding: String::new(),
+            current_binding: String::new(),
+        },
+    );
+    bindings.insert(
+        "push_to_talk".to_string(),
+        ShortcutBinding {
+            id: "push_to_talk".to_string(),
+            name: "Push To Talk".to_string(),
+            description: "Hold to record and release to transcribe.".to_string(),
             default_binding: default_shortcut.to_string(),
             current_binding: default_shortcut.to_string(),
         },
     );
-    #[cfg(target_os = "windows")]
-    let default_post_process_shortcut = "ctrl+shift+space";
-    #[cfg(target_os = "macos")]
-    let default_post_process_shortcut = "option+shift+space";
-    #[cfg(target_os = "linux")]
-    let default_post_process_shortcut = "ctrl+shift+space";
-    #[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
-    let default_post_process_shortcut = "alt+shift+space";
 
     bindings.insert(
         "transcribe_with_post_process".to_string(),
@@ -821,6 +833,16 @@ pub fn get_default_settings() -> AppSettings {
             name: "Transcribe with Post-Processing".to_string(),
             description: "Converts your speech into text and applies AI post-processing."
                 .to_string(),
+            default_binding: String::new(),
+            current_binding: String::new(),
+        },
+    );
+    bindings.insert(
+        "push_to_talk_with_post_process".to_string(),
+        ShortcutBinding {
+            id: "push_to_talk_with_post_process".to_string(),
+            name: "Push To Talk with Post-Processing".to_string(),
+            description: "Hold to record, then apply AI post-processing on release.".to_string(),
             default_binding: default_post_process_shortcut.to_string(),
             current_binding: default_post_process_shortcut.to_string(),
         },
@@ -839,7 +861,6 @@ pub fn get_default_settings() -> AppSettings {
     AppSettings {
         settings_schema_version: default_settings_schema_version(),
         bindings,
-        push_to_talk: default_push_to_talk(),
         audio_feedback: false,
         audio_feedback_volume: default_audio_feedback_volume(),
         sound_theme: default_sound_theme(),
@@ -1058,6 +1079,74 @@ fn apply_settings_migrations(
             settings.transcribe_accelerator = TranscribeAcceleratorSetting::Auto;
             settings.transcribe_gpu_device = default_transcribe_gpu_device();
         }
+        settings.settings_schema_version = 1;
+        updated = true;
+    }
+
+    if stored_schema_version < 2 {
+        let legacy_push_to_talk = settings_value
+            .get("push_to_talk")
+            .and_then(serde_json::Value::as_bool)
+            .unwrap_or(true);
+        let legacy_transcribe = legacy_binding_current(
+            settings_value,
+            "transcribe",
+            historical_transcribe_shortcut(),
+        );
+        let legacy_post_process = legacy_binding_current(
+            settings_value,
+            "transcribe_with_post_process",
+            historical_post_process_shortcut(),
+        );
+        let mut defaults = get_default_settings().bindings;
+
+        for id in [
+            "transcribe",
+            "push_to_talk",
+            "transcribe_with_post_process",
+            "push_to_talk_with_post_process",
+        ] {
+            defaults
+                .get_mut(id)
+                .expect("all recording binding defaults exist")
+                .current_binding
+                .clear();
+        }
+
+        if legacy_push_to_talk {
+            defaults
+                .get_mut("push_to_talk")
+                .expect("push-to-talk default binding exists")
+                .current_binding = legacy_transcribe;
+            defaults
+                .get_mut("push_to_talk_with_post_process")
+                .expect("post-processing push-to-talk default binding exists")
+                .current_binding = legacy_post_process;
+        } else {
+            defaults
+                .get_mut("transcribe")
+                .expect("transcribe default binding exists")
+                .current_binding = legacy_transcribe;
+            defaults
+                .get_mut("transcribe_with_post_process")
+                .expect("post-processing transcribe default binding exists")
+                .current_binding = legacy_post_process;
+        }
+
+        for id in [
+            "transcribe",
+            "push_to_talk",
+            "transcribe_with_post_process",
+            "push_to_talk_with_post_process",
+        ] {
+            settings.bindings.insert(
+                id.to_string(),
+                defaults
+                    .remove(id)
+                    .expect("all recording binding defaults exist"),
+            );
+        }
+
         settings.settings_schema_version = CURRENT_SETTINGS_SCHEMA_VERSION;
         updated = true;
     }
@@ -1083,26 +1172,27 @@ fn apply_settings_migrations(
     updated
 }
 
+fn legacy_binding_current(
+    settings_value: &serde_json::Value,
+    binding_id: &str,
+    historical_default: &str,
+) -> String {
+    settings_value
+        .get("bindings")
+        .and_then(|bindings| bindings.get(binding_id))
+        .and_then(|binding| binding.get("current_binding"))
+        .and_then(serde_json::Value::as_str)
+        .filter(|binding| !binding.trim().is_empty())
+        .unwrap_or(historical_default)
+        .to_string()
+}
+
 pub fn write_settings(app: &AppHandle, settings: AppSettings) {
     let store = app
         .store(crate::portable::store_path(SETTINGS_STORE_PATH))
         .expect("Failed to initialize store");
 
     store.set("settings", serde_json::to_value(&settings).unwrap());
-}
-
-pub fn get_bindings(app: &AppHandle) -> HashMap<String, ShortcutBinding> {
-    let settings = get_settings(app);
-
-    settings.bindings
-}
-
-pub fn get_stored_binding(app: &AppHandle, id: &str) -> ShortcutBinding {
-    let bindings = get_bindings(app);
-
-    let binding = bindings.get(id).unwrap().clone();
-
-    binding
 }
 
 pub fn get_history_limit(app: &AppHandle) -> usize {
@@ -1123,13 +1213,208 @@ mod tests {
         serde_json::to_value(get_default_settings()).unwrap()
     }
 
+    fn binding_value(id: &str, current_binding: &str) -> serde_json::Value {
+        serde_json::json!({
+            "id": id,
+            "name": id,
+            "description": id,
+            "default_binding": current_binding,
+            "current_binding": current_binding,
+        })
+    }
+
+    #[test]
+    fn new_installs_default_to_push_to_talk_shortcuts() {
+        let settings = get_default_settings();
+
+        assert_eq!(settings.settings_schema_version, 2);
+        assert_eq!(settings.bindings["transcribe"].current_binding, "");
+        assert_eq!(
+            settings.bindings["push_to_talk"].current_binding,
+            settings.bindings["push_to_talk"].default_binding
+        );
+        assert_eq!(
+            settings.bindings["transcribe_with_post_process"].current_binding,
+            ""
+        );
+        assert_eq!(
+            settings.bindings["push_to_talk_with_post_process"].current_binding,
+            settings.bindings["push_to_talk_with_post_process"].default_binding
+        );
+    }
+
+    #[test]
+    fn migration_preserves_toggle_mode_mappings() {
+        let raw = serde_json::json!({
+            "settings_schema_version": 1,
+            "push_to_talk": false,
+            "bindings": {
+                "transcribe": binding_value("transcribe", "f13"),
+                "transcribe_with_post_process": binding_value(
+                    "transcribe_with_post_process",
+                    "ctrl+alt+p"
+                ),
+            },
+            "onboarding_completed": false,
+            "whats_new_last_seen_version": default_whats_new_last_seen_version(),
+            "overlay_style": "live",
+        });
+        let mut settings: AppSettings = serde_json::from_value(raw.clone()).unwrap();
+
+        assert!(apply_settings_migrations(&mut settings, &raw));
+        assert_eq!(settings.bindings["transcribe"].current_binding, "f13");
+        assert_eq!(settings.bindings["push_to_talk"].current_binding, "");
+        assert_eq!(
+            settings.bindings["transcribe_with_post_process"].current_binding,
+            "ctrl+alt+p"
+        );
+        assert_eq!(
+            settings.bindings["push_to_talk_with_post_process"].current_binding,
+            ""
+        );
+    }
+
+    #[test]
+    fn migration_preserves_push_to_talk_mappings() {
+        let raw = serde_json::json!({
+            "settings_schema_version": 1,
+            "push_to_talk": true,
+            "bindings": {
+                "transcribe": binding_value("transcribe", "f14"),
+                "transcribe_with_post_process": binding_value(
+                    "transcribe_with_post_process",
+                    "ctrl+alt+o"
+                ),
+            },
+            "onboarding_completed": false,
+            "whats_new_last_seen_version": default_whats_new_last_seen_version(),
+            "overlay_style": "live",
+        });
+        let mut settings: AppSettings = serde_json::from_value(raw.clone()).unwrap();
+
+        assert!(apply_settings_migrations(&mut settings, &raw));
+        assert_eq!(settings.bindings["transcribe"].current_binding, "");
+        assert_eq!(settings.bindings["push_to_talk"].current_binding, "f14");
+        assert_eq!(
+            settings.bindings["transcribe_with_post_process"].current_binding,
+            ""
+        );
+        assert_eq!(
+            settings.bindings["push_to_talk_with_post_process"].current_binding,
+            "ctrl+alt+o"
+        );
+    }
+
+    #[test]
+    fn migration_uses_historical_defaults_for_missing_or_invalid_fields() {
+        let defaults = get_default_settings();
+        let malformed_bindings = [
+            (
+                "wrong types",
+                serde_json::json!({ "current_binding": 42 }),
+                serde_json::Value::Null,
+            ),
+            (
+                "blank strings",
+                serde_json::json!({ "current_binding": "" }),
+                serde_json::json!({ "current_binding": "" }),
+            ),
+            (
+                "whitespace-only strings",
+                serde_json::json!({ "current_binding": " \t" }),
+                serde_json::json!({ "current_binding": "\n" }),
+            ),
+            (
+                "missing current bindings",
+                serde_json::json!({}),
+                serde_json::json!({}),
+            ),
+        ];
+
+        for (case, transcribe, post_process) in malformed_bindings {
+            let raw = serde_json::json!({
+                "settings_schema_version": 1,
+                "push_to_talk": "yes",
+                "bindings": {
+                    "transcribe": transcribe,
+                    "transcribe_with_post_process": post_process,
+                },
+                "onboarding_completed": false,
+                "whats_new_last_seen_version": default_whats_new_last_seen_version(),
+                "overlay_style": "live",
+            });
+            let mut settings = salvage_settings(&raw);
+
+            assert!(apply_settings_migrations(&mut settings, &raw), "{case}");
+            assert_eq!(
+                settings.bindings["transcribe"].current_binding, "",
+                "{case}"
+            );
+            assert_eq!(
+                settings.bindings["push_to_talk"].current_binding,
+                defaults.bindings["push_to_talk"].default_binding,
+                "{case}"
+            );
+            assert_eq!(
+                settings.bindings["transcribe_with_post_process"].current_binding, "",
+                "{case}"
+            );
+            assert_eq!(
+                settings.bindings["push_to_talk_with_post_process"].current_binding,
+                defaults.bindings["push_to_talk_with_post_process"].default_binding,
+                "{case}"
+            );
+        }
+    }
+
+    #[test]
+    fn migration_omits_retired_field_when_serialized() {
+        let raw = serde_json::json!({
+            "settings_schema_version": 1,
+            "push_to_talk": true,
+            "bindings": {},
+            "onboarding_completed": false,
+            "whats_new_last_seen_version": default_whats_new_last_seen_version(),
+            "overlay_style": "live",
+        });
+        let mut settings: AppSettings = serde_json::from_value(raw.clone()).unwrap();
+
+        assert!(apply_settings_migrations(&mut settings, &raw));
+        let serialized = serde_json::to_value(settings).unwrap();
+        assert!(serialized.get("push_to_talk").is_none());
+    }
+
+    #[test]
+    fn migration_runs_only_once() {
+        let raw = serde_json::json!({
+            "settings_schema_version": 1,
+            "push_to_talk": false,
+            "bindings": {
+                "transcribe": binding_value("transcribe", "f15"),
+                "transcribe_with_post_process": binding_value(
+                    "transcribe_with_post_process",
+                    "f16"
+                ),
+            },
+            "onboarding_completed": false,
+            "whats_new_last_seen_version": default_whats_new_last_seen_version(),
+            "overlay_style": "live",
+        });
+        let mut settings: AppSettings = serde_json::from_value(raw.clone()).unwrap();
+
+        assert!(apply_settings_migrations(&mut settings, &raw));
+        let migrated_raw = serde_json::to_value(&settings).unwrap();
+        assert!(!apply_settings_migrations(&mut settings, &migrated_raw));
+        assert_eq!(settings.bindings["transcribe"].current_binding, "f15");
+        assert_eq!(settings.bindings["push_to_talk"].current_binding, "");
+    }
+
     /// Every field must survive a partial store: a missing key must never fail
     /// the whole-settings parse (#1619). `json!({})` is the extreme case.
     #[test]
     fn empty_store_parses_with_defaults() {
         let settings: AppSettings = serde_json::from_value(serde_json::json!({}))
             .expect("all AppSettings fields need serde defaults");
-        assert!(settings.push_to_talk);
         assert!(!settings.audio_feedback);
         // Bindings default to empty; the load path merges the real defaults in.
         assert!(settings.bindings.is_empty());
@@ -1137,7 +1422,7 @@ mod tests {
 
     /// Frozen snapshot of a real v0.9.0-era settings store, as written to
     /// disk. This pins backwards compatibility: it must always parse strictly
-    /// (no salvage) and require no migration rewrite.
+    /// (no salvage) before one-time migrations are applied.
     ///
     /// If a schema change breaks this test, do NOT just update the fixture —
     /// it stands in for the stores on users' machines. Add a
@@ -1145,7 +1430,7 @@ mod tests {
     /// `apply_settings_migrations` so old values keep loading, and only extend
     /// the fixture alongside that.
     #[test]
-    fn frozen_v0_9_store_parses_strictly_without_migration() {
+    fn frozen_v0_9_store_parses_strictly_and_migrates() {
         // Note "log_level": 2 — the legacy numeric format, kept deliberately.
         let stored: serde_json::Value = serde_json::from_str(
             r##"{
@@ -1249,8 +1534,10 @@ mod tests {
         assert_eq!(settings.log_level, LogLevel::Debug);
         assert_eq!(settings.sound_theme, SoundTheme::Pop);
 
-        // A current-format store must not be rewritten on every read.
-        assert!(!apply_settings_migrations(&mut settings, &stored));
+        assert!(apply_settings_migrations(&mut settings, &stored));
+        assert_eq!(settings.bindings["transcribe"].current_binding, "f13");
+        assert_eq!(settings.bindings["push_to_talk"].current_binding, "");
+        assert_eq!(settings.settings_schema_version, 2);
     }
 
     #[test]

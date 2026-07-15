@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { listen } from "@tauri-apps/api/event";
 import { formatKeyCombination } from "../../lib/utils/keyboard";
@@ -8,12 +8,15 @@ import { useSettings } from "../../hooks/useSettings";
 import { useOsType } from "../../hooks/useOsType";
 import { commands } from "@/bindings";
 import { toast } from "sonner";
+import { ShortcutClearButton } from "./ShortcutClearButton";
+import { assertCommandSucceeded, shortcutErrorMessage } from "./shortcutErrors";
 
 interface HandyKeysShortcutInputProps {
   descriptionMode?: "inline" | "tooltip";
   grouped?: boolean;
   shortcutId: string;
   disabled?: boolean;
+  clearable?: boolean;
 }
 
 interface HandyKeysEvent {
@@ -28,201 +31,228 @@ export const HandyKeysShortcutInput: React.FC<HandyKeysShortcutInputProps> = ({
   grouped = false,
   shortcutId,
   disabled = false,
+  clearable = false,
 }) => {
   const { t } = useTranslation();
-  const { getSetting, updateBinding, resetBinding, isUpdating, isLoading } =
-    useSettings();
+  const tRef = useRef(t);
+  tRef.current = t;
+  const {
+    getSetting,
+    updateBinding,
+    clearBinding,
+    resetBinding,
+    isUpdating,
+    isLoading,
+  } = useSettings();
   const [isRecording, setIsRecording] = useState(false);
-  const [currentKeys, setCurrentKeys] = useState<string>("");
-  const [originalBinding, setOriginalBinding] = useState<string>("");
-  const shortcutRef = useRef<HTMLDivElement | null>(null);
+  const [currentKeys, setCurrentKeys] = useState("");
+  const captureRef = useRef<HTMLDivElement>(null);
+  const activeCaptureRef = useRef(false);
+  const mountedRef = useRef(false);
+  const pendingTeardownRef = useRef(false);
+  const commitInFlightRef = useRef(false);
+  const stopInFlightRef = useRef<Promise<boolean> | null>(null);
   const unlistenRef = useRef<(() => void) | null>(null);
-  // Use a ref to track currentKeys for the event handler (avoids stale closure)
-  const currentKeysRef = useRef<string>("");
+  const currentKeysRef = useRef("");
   const osType = useOsType();
-
   const bindings = getSetting("bindings") || {};
 
-  // Handle cancellation
-  const cancelRecording = useCallback(async () => {
-    if (!isRecording) return;
-
-    // Stop listening for backend events
-    if (unlistenRef.current) {
-      unlistenRef.current();
-      unlistenRef.current = null;
-    }
-
-    // Stop backend recording
-    await commands.stopHandyKeysRecording().catch(console.error);
-
-    // Restore original binding
-    if (originalBinding) {
-      try {
-        await updateBinding(shortcutId, originalBinding);
-      } catch (error) {
-        console.error("Failed to restore original binding:", error);
-        toast.error(t("settings.general.shortcut.errors.restore"));
-      }
-    }
-
-    setIsRecording(false);
-    setCurrentKeys("");
+  const resetCaptureState = useCallback(() => {
+    activeCaptureRef.current = false;
+    pendingTeardownRef.current = false;
+    commitInFlightRef.current = false;
     currentKeysRef.current = "";
-    setOriginalBinding("");
-  }, [isRecording, originalBinding, shortcutId, updateBinding, t]);
+    if (mountedRef.current) {
+      setCurrentKeys("");
+      setIsRecording(false);
+    }
+  }, []);
 
-  // Set up event listener for handy-keys events
+  const stopCapture = useCallback((): Promise<boolean> => {
+    if (!activeCaptureRef.current) return Promise.resolve(true);
+    if (stopInFlightRef.current) return stopInFlightRef.current;
+    const stopPromise = (async () => {
+      try {
+        assertCommandSucceeded(await commands.stopHandyKeysRecording());
+        unlistenRef.current?.();
+        unlistenRef.current = null;
+        resetCaptureState();
+        return true;
+      } catch (error) {
+        console.error("Failed to stop Handy Keys capture:", error);
+        if (mountedRef.current) {
+          toast.error(shortcutErrorMessage(error, tRef.current));
+        }
+        return false;
+      } finally {
+        stopInFlightRef.current = null;
+      }
+    })();
+    stopInFlightRef.current = stopPromise;
+    return stopPromise;
+  }, [resetCaptureState]);
+
+  const retryStopForCleanup = useCallback(async () => {
+    for (let attempt = 0; attempt < 3 && activeCaptureRef.current; attempt++) {
+      if (await stopCapture()) return;
+    }
+  }, [stopCapture]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    // Idempotently recover a capture left behind by a renderer that vanished.
+    void commands
+      .stopHandyKeysRecording()
+      .then(assertCommandSucceeded)
+      .catch(console.error);
+
+    const handleWindowCleanup = () => void retryStopForCleanup();
+    window.addEventListener("pagehide", handleWindowCleanup);
+    window.addEventListener("blur", handleWindowCleanup);
+    return () => {
+      mountedRef.current = false;
+      window.removeEventListener("pagehide", handleWindowCleanup);
+      window.removeEventListener("blur", handleWindowCleanup);
+      void retryStopForCleanup();
+    };
+  }, [retryStopForCleanup]);
+
   useEffect(() => {
     if (!isRecording) return;
+    let disposed = false;
+    void listen<HandyKeysEvent>("handy-keys-event", async (event) => {
+      if (disposed) return;
+      if (commitInFlightRef.current) return;
+      if (pendingTeardownRef.current) {
+        await stopCapture();
+        return;
+      }
+      const {
+        hotkey_string: hotkey,
+        is_key_down: isKeyDown,
+        key,
+      } = event.payload;
+      const clearKey = (key || hotkey).toLowerCase();
 
-    let cleanup = false;
+      if (
+        isKeyDown &&
+        clearable &&
+        event.payload.modifiers.length === 0 &&
+        (clearKey === "delete" || clearKey === "backspace")
+      ) {
+        commitInFlightRef.current = true;
+        try {
+          await clearBinding(shortcutId);
+          pendingTeardownRef.current = true;
+          await stopCapture();
+        } catch (error) {
+          toast.error(shortcutErrorMessage(error, t));
+        } finally {
+          commitInFlightRef.current = false;
+        }
+        return;
+      }
 
-    const setupListener = async () => {
-      // Listen for key events from backend
-      const unlisten = await listen<HandyKeysEvent>(
-        "handy-keys-event",
-        async (event) => {
-          if (cleanup) return;
-
-          const { hotkey_string, is_key_down } = event.payload;
-
-          if (is_key_down && hotkey_string) {
-            // Update both state (for display) and ref (for release handler)
-            currentKeysRef.current = hotkey_string;
-            setCurrentKeys(hotkey_string);
-          } else if (!is_key_down && currentKeysRef.current) {
-            // Key released - commit the shortcut using the ref value
-            const keysToCommit = currentKeysRef.current;
-            try {
-              await updateBinding(shortcutId, keysToCommit);
-            } catch (error) {
-              console.error("Failed to change binding:", error);
-              toast.error(
-                t("settings.general.shortcut.errors.set", {
-                  error: String(error),
-                }),
-              );
-
-              // Reset to original binding on error
-              if (originalBinding) {
-                try {
-                  await updateBinding(shortcutId, originalBinding);
-                } catch (resetError) {
-                  console.error("Failed to reset binding:", resetError);
-                  toast.error(t("settings.general.shortcut.errors.reset"));
-                }
-              }
-            }
-
-            // Stop recording
-            if (unlistenRef.current) {
-              unlistenRef.current();
-              unlistenRef.current = null;
-            }
-            await commands.stopHandyKeysRecording().catch(console.error);
-            setIsRecording(false);
-            setCurrentKeys("");
-            currentKeysRef.current = "";
-            setOriginalBinding("");
-          }
-        },
-      );
-
-      unlistenRef.current = unlisten;
-    };
-
-    setupListener();
+      if (isKeyDown && hotkey) {
+        currentKeysRef.current = hotkey;
+        setCurrentKeys(hotkey);
+      } else if (!isKeyDown && currentKeysRef.current) {
+        commitInFlightRef.current = true;
+        try {
+          await updateBinding(shortcutId, currentKeysRef.current);
+          pendingTeardownRef.current = true;
+          await stopCapture();
+        } catch (error) {
+          toast.error(shortcutErrorMessage(error, t));
+          pendingTeardownRef.current = true;
+          await stopCapture();
+        } finally {
+          commitInFlightRef.current = false;
+        }
+      }
+    }).then((removeListener) => {
+      if (disposed) removeListener();
+      else unlistenRef.current = removeListener;
+    });
 
     return () => {
-      cleanup = true;
-      if (unlistenRef.current) {
-        unlistenRef.current();
-        unlistenRef.current = null;
-      }
-      // Stop backend recording on unmount to prevent orphaned recording loops
-      commands.stopHandyKeysRecording().catch(console.error);
+      disposed = true;
+      unlistenRef.current?.();
+      unlistenRef.current = null;
     };
   }, [
+    clearBinding,
+    clearable,
     isRecording,
     shortcutId,
-    originalBinding,
-    updateBinding,
-    cancelRecording,
+    stopCapture,
     t,
+    updateBinding,
   ]);
 
-  // Handle click outside
   useEffect(() => {
     if (!isRecording) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        shortcutRef.current &&
-        !shortcutRef.current.contains(e.target as Node)
-      ) {
-        cancelRecording();
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!captureRef.current?.contains(event.target as Node)) {
+        void stopCapture();
       }
     };
-
     window.addEventListener("click", handleClickOutside);
     return () => window.removeEventListener("click", handleClickOutside);
-  }, [isRecording, cancelRecording]);
+  }, [isRecording, stopCapture]);
 
-  // Start recording a new shortcut
   const startRecording = async () => {
-    if (isRecording) return;
-
-    // Store the original binding to restore if canceled
-    setOriginalBinding(bindings[shortcutId]?.current_binding || "");
-
-    // Start backend recording
+    if (isRecording || disabled) return;
     try {
-      await commands.startHandyKeysRecording(shortcutId);
-      setIsRecording(true);
-      setCurrentKeys("");
+      assertCommandSucceeded(
+        await commands.startHandyKeysRecording(shortcutId),
+      );
+      activeCaptureRef.current = true;
+      if (!mountedRef.current) {
+        await retryStopForCleanup();
+        return;
+      }
+      pendingTeardownRef.current = false;
       currentKeysRef.current = "";
+      setCurrentKeys("");
+      setIsRecording(true);
     } catch (error) {
-      console.error("Failed to start recording:", error);
+      toast.error(shortcutErrorMessage(error, t));
+    }
+  };
+
+  const handleClear = async () => {
+    try {
+      await clearBinding(shortcutId);
+    } catch (error) {
+      toast.error(shortcutErrorMessage(error, t));
+    }
+  };
+
+  const handleReset = async () => {
+    try {
+      await resetBinding(shortcutId);
+    } catch (error) {
       toast.error(
-        t("settings.general.shortcut.errors.set", { error: String(error) }),
+        shortcutErrorMessage(
+          error,
+          t,
+          "settings.general.shortcut.errors.reset",
+        ),
       );
     }
   };
 
-  // Format the current shortcut keys being recorded
-  const formatCurrentKeys = (): string => {
-    if (!currentKeys) return t("settings.general.shortcut.pressKeys");
-    return formatKeyCombination(currentKeys, osType);
-  };
-
-  // If still loading, show loading state
+  const containerProps = { descriptionMode, grouped };
   if (isLoading) {
     return (
       <SettingContainer
         title={t("settings.general.shortcut.title")}
         description={t("settings.general.shortcut.description")}
-        descriptionMode={descriptionMode}
-        grouped={grouped}
+        {...containerProps}
       >
         <div className="text-sm text-mid-gray">
           {t("settings.general.shortcut.loading")}
-        </div>
-      </SettingContainer>
-    );
-  }
-
-  // If no bindings are loaded, show empty state
-  if (Object.keys(bindings).length === 0) {
-    return (
-      <SettingContainer
-        title={t("settings.general.shortcut.title")}
-        description={t("settings.general.shortcut.description")}
-        descriptionMode={descriptionMode}
-        grouped={grouped}
-      >
-        <div className="text-sm text-mid-gray">
-          {t("settings.general.shortcut.none")}
         </div>
       </SettingContainer>
     );
@@ -234,8 +264,7 @@ export const HandyKeysShortcutInput: React.FC<HandyKeysShortcutInputProps> = ({
       <SettingContainer
         title={t("settings.general.shortcut.title")}
         description={t("settings.general.shortcut.notFound")}
-        descriptionMode={descriptionMode}
-        grouped={grouped}
+        {...containerProps}
       >
         <div className="text-sm text-mid-gray">
           {t("settings.general.shortcut.none")}
@@ -244,44 +273,64 @@ export const HandyKeysShortcutInput: React.FC<HandyKeysShortcutInputProps> = ({
     );
   }
 
-  // Get translated name and description for the binding
-  const translatedName = t(
+  const name = t(
     `settings.general.shortcut.bindings.${shortcutId}.name`,
     binding.name,
   );
-  const translatedDescription = t(
+  const description = t(
     `settings.general.shortcut.bindings.${shortcutId}.description`,
     binding.description,
   );
+  const busy = disabled || isUpdating(`binding_${shortcutId}`);
+  const currentBinding = binding.current_binding;
 
   return (
     <SettingContainer
-      title={translatedName}
-      description={translatedDescription}
-      descriptionMode={descriptionMode}
-      grouped={grouped}
+      title={name}
+      description={description}
+      {...containerProps}
       disabled={disabled}
       layout="horizontal"
     >
       <div className="flex items-center space-x-1">
         {isRecording ? (
           <div
-            ref={shortcutRef}
+            ref={captureRef}
+            data-testid={`shortcut-capture-${shortcutId}`}
+            role="status"
+            aria-live="polite"
             className="px-2 py-1 text-sm font-semibold border border-logo-primary bg-logo-primary/30 rounded-md"
           >
-            {formatCurrentKeys()}
+            {currentKeys
+              ? formatKeyCombination(currentKeys, osType)
+              : t("settings.general.shortcut.pressKeys")}
           </div>
         ) : (
-          <div
-            className="px-2 py-1 text-sm font-semibold bg-mid-gray/10 border border-mid-gray/80 hover:bg-logo-primary/10 rounded-md cursor-pointer hover:border-logo-primary"
-            onClick={startRecording}
+          <button
+            type="button"
+            disabled={busy}
+            onClick={(event) => {
+              event.stopPropagation();
+              void startRecording();
+            }}
+            className="px-2 py-1 text-sm font-semibold bg-mid-gray/10 border border-mid-gray/80 hover:bg-logo-primary/10 rounded-md cursor-pointer hover:border-logo-primary disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {formatKeyCombination(binding.current_binding, osType)}
-          </div>
+            {currentBinding
+              ? formatKeyCombination(currentBinding, osType)
+              : t("settings.general.shortcut.set")}
+          </button>
+        )}
+        {clearable && currentBinding && !isRecording && (
+          <ShortcutClearButton
+            label={t("settings.general.shortcut.clear", { name })}
+            disabled={busy}
+            onClick={handleClear}
+          />
         )}
         <ResetButton
-          onClick={() => resetBinding(shortcutId)}
-          disabled={isUpdating(`binding_${shortcutId}`)}
+          onClick={handleReset}
+          disabled={busy || isRecording}
+          ariaLabel={t("settings.general.shortcut.reset", { name })}
         />
       </div>
     </SettingContainer>

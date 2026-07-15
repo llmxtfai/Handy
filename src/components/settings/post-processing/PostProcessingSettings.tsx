@@ -434,6 +434,13 @@ export const PostProcessingSettings: React.FC = () => {
           shortcutId="transcribe_with_post_process"
           descriptionMode="tooltip"
           grouped={true}
+          clearable
+        />
+        <ShortcutInput
+          shortcutId="push_to_talk_with_post_process"
+          descriptionMode="tooltip"
+          grouped={true}
+          clearable
         />
       </SettingsGroup>
 

@@ -533,9 +533,10 @@ pub fn run(cli_args: CliArgs) {
 
     let specta_builder = Builder::<tauri::Wry>::new()
         .commands(collect_commands![
-            shortcut::change_binding,
-            shortcut::reset_binding,
-            shortcut::change_ptt_setting,
+            shortcut::mutation::change_binding,
+            shortcut::mutation::clear_binding,
+            shortcut::mutation::abort_shortcut_capture,
+            shortcut::mutation::reset_binding,
             shortcut::change_audio_feedback_setting,
             shortcut::change_audio_feedback_volume_setting,
             shortcut::change_sound_theme_setting,
@@ -570,8 +571,8 @@ pub fn run(cli_args: CliArgs) {
             shortcut::delete_post_process_prompt,
             shortcut::set_post_process_selected_prompt,
             shortcut::update_custom_words,
-            shortcut::suspend_binding,
-            shortcut::resume_binding,
+            shortcut::mutation::suspend_binding,
+            shortcut::mutation::resume_binding,
             shortcut::change_mute_while_recording_setting,
             shortcut::change_append_trailing_space_setting,
             shortcut::change_lazy_stream_close_setting,
@@ -840,6 +841,7 @@ pub fn run(cli_args: CliArgs) {
             WEBVIEW_LOG_STREAMING.store(settings.debug_mode, Ordering::Relaxed);
             let app_handle = app.handle().clone();
             app.manage(TranscriptionCoordinator::new(app_handle.clone()));
+            app.manage(shortcut::ShortcutCaptureState::default());
 
             initialize_core_logic(&app_handle);
 

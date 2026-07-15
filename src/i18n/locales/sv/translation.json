@@ -160,6 +160,9 @@
     "general": {
       "title": "Allmänt",
       "shortcut": {
+        "set": "Ange kortkommando",
+        "clear": "Rensa {{name}}",
+        "reset": "Återställ {{name}}",
         "title": "Handy-kortkommandon",
         "description": "Konfigurera kortkommandon för att starta tal-till-text-inspelning",
         "loading": "Laddar kortkommandon...",
@@ -167,9 +170,17 @@
         "notFound": "Kortkommando hittades inte",
         "pressKeys": "Tryck på tangenter...",
         "bindings": {
+          "push_to_talk": {
+            "name": "Kortkommando för tryck för att tala",
+            "description": "Håll ned för att spela in och släpp för att transkribera."
+          },
+          "push_to_talk_with_post_process": {
+            "name": "Tryck för att tala med efterbearbetning",
+            "description": "Håll ned för att spela in och släpp för att transkribera och tillämpa AI-efterbearbetning."
+          },
           "transcribe": {
             "name": "Kortkommando för transkribering",
-            "description": "Kortkommandot för att spela in och transkribera din röst."
+            "description": "Tryck en gång för att börja spela in och en gång till för att transkribera."
           },
           "cancel": {
             "name": "Kortkommando för att avbryta",
@@ -177,10 +188,12 @@
           },
           "transcribe_with_post_process": {
             "name": "Snabbkommando för efterbearbetning",
-            "description": "Valfritt: En dedikerad snabbknapp som alltid tillämpar AI-efterbearbetning på din transkription."
+            "description": "Tryck en gång för att börja spela in och en gång till för att transkribera med AI-efterbearbetning."
           }
         },
         "errors": {
+          "finalNormalBindingRequired": "Ange ett annat kortkommando för inspelning innan du rensar detta.",
+          "recordingInProgress": "Kortkommandon kan inte ändras medan Handy spelar in eller transkriberar.",
           "restore": "Misslyckades med att återställa ursprungligt kortkommando",
           "set": "Misslyckades med att ställa in kortkommando: {{error}}",
           "reset": "Misslyckades med att återställa kortkommando till ursprungsvärdet"
@@ -195,7 +208,7 @@
       },
       "pushToTalk": {
         "label": "Tryck för att tala",
-        "description": "Håll ned för att spela in, släpp för att stoppa"
+        "description": "Håll ned för att spela in och släpp för att transkribera."
       }
     },
     "models": {

@@ -178,6 +178,9 @@
     "general": {
       "title": "Genel",
       "shortcut": {
+        "set": "Kısayol ayarla",
+        "clear": "{{name}} kısayolunu temizle",
+        "reset": "{{name}} kısayolunu sıfırla",
         "title": "Handy Kısayolları",
         "description": "Sesle yazma kaydını başlatmak için klavye kısayollarını yapılandırın",
         "loading": "Kısayollar yükleniyor...",
@@ -185,9 +188,17 @@
         "notFound": "Kısayol bulunamadı",
         "pressKeys": "Tuşlara basın...",
         "bindings": {
+          "push_to_talk": {
+            "name": "Bas-Konuş Kısayolu",
+            "description": "Kaydetmek için basılı tutun, metne dönüştürmek için bırakın."
+          },
+          "push_to_talk_with_post_process": {
+            "name": "Son İşlemli Bas-Konuş Kısayolu",
+            "description": "Kaydetmek için basılı tutun, metne dönüştürüp AI son işlemi uygulamak için bırakın."
+          },
           "transcribe": {
             "name": "Transkripsiyon Kısayolu",
-            "description": "Sesinizi kaydetmek ve metne dönüştürmek için klavye kısayolu."
+            "description": "Kaydı başlatmak için bir kez, metne dönüştürmek için tekrar basın."
           },
           "cancel": {
             "name": "İptal Kısayolu",
@@ -195,10 +206,12 @@
           },
           "transcribe_with_post_process": {
             "name": "Son İşlem Kısayolu",
-            "description": "İsteğe bağlı: Transkripsiyonunuza her zaman AI son işleme uygulayan özel bir kısayol tuşu."
+            "description": "Kaydı başlatmak için bir kez, metne dönüştürüp AI son işlemi uygulamak için tekrar basın."
           }
         },
         "errors": {
+          "finalNormalBindingRequired": "Bunu temizlemeden önce başka bir kayıt kısayolu atayın.",
+          "recordingInProgress": "Handy kayıt yaparken veya metne dönüştürürken kısayollar değiştirilemez.",
           "restore": "Orijinal kısayol geri yüklenemedi",
           "set": "Kısayol ayarlanamadı: {{error}}",
           "reset": "Kısayol orijinal değerine sıfırlanamadı"
@@ -213,7 +226,7 @@
       },
       "pushToTalk": {
         "label": "Bas Konuş",
-        "description": "Kaydetmek için basılı tutun, durdurmak için bırakın"
+        "description": "Kaydetmek için basılı tutun, metne dönüştürmek için bırakın."
       }
     },
     "sound": {
