@@ -114,13 +114,13 @@ fn unregister_shortcut_for_implementation(
 #[derive(Serialize, Type)]
 pub struct ImplementationChangeResult {
     pub success: bool,
-    /// List of binding IDs that were reset to defaults due to incompatibility
+    /// Retained for API compatibility. Backend switches never rewrite bindings.
     pub reset_bindings: Vec<String>,
 }
 
 /// Change the keyboard implementation with runtime switching.
 /// This will unregister all shortcuts from the old implementation,
-/// validate shortcuts for the new implementation (resetting invalid ones to defaults),
+/// validate shortcuts for the new implementation without changing them,
 /// and register them with the new implementation.
 #[tauri::command]
 #[specta::specta]

@@ -179,6 +179,8 @@
       "title": "Allgemein",
       "shortcut": {
         "set": "Tastenkürzel festlegen",
+        "setLabel": "{{name}} festlegen",
+        "editLabel": "{{name}} bearbeiten",
         "clear": "{{name}} löschen",
         "reset": "{{name}} zurücksetzen",
         "title": "Handy-Tastenkürzel",
@@ -521,8 +523,7 @@
       },
       "keyboardImplementation": {
         "title": "Tastatur-Implementierung",
-        "description": "Wähle das Backend für Tastaturkürzel.",
-        "bindingsReset": "Tastaturkürzel waren inkompatibel und wurden auf die Standardwerte zurückgesetzt"
+        "description": "Wähle das Backend für Tastaturkürzel."
       },
       "paths": {
         "appData": "App-Daten:",

@@ -179,6 +179,8 @@
       "title": "通用",
       "shortcut": {
         "set": "设置快捷键",
+        "setLabel": "设置{{name}}",
+        "editLabel": "编辑{{name}}",
         "clear": "清除{{name}}",
         "reset": "重置{{name}}",
         "title": "Handy 快捷键",
@@ -521,8 +523,7 @@
       },
       "keyboardImplementation": {
         "title": "键盘实现",
-        "description": "选择键盘快捷键的后端。",
-        "bindingsReset": "键盘快捷键不兼容，已重置为默认值"
+        "description": "选择键盘快捷键的后端。"
       },
       "paths": {
         "appData": "应用数据:",

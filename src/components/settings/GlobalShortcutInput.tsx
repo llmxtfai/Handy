@@ -59,6 +59,8 @@ export const GlobalShortcutInput: React.FC<GlobalShortcutInputProps> = ({
   const captureRef = useRef<HTMLDivElement>(null);
   const activeCaptureRef = useRef<string | null>(null);
   const mountedRef = useRef(false);
+  const startInFlightRef = useRef(false);
+  const commitInFlightRef = useRef(false);
   const pressedKeysRef = useRef<Set<string>>(new Set());
   const recordedKeysRef = useRef<string[]>([]);
   const osType = useOsType();
@@ -122,17 +124,22 @@ export const GlobalShortcutInput: React.FC<GlobalShortcutInputProps> = ({
     if (!editing) return;
 
     const clearDuringCapture = async () => {
+      if (commitInFlightRef.current) return;
+      commitInFlightRef.current = true;
       try {
         await clearBinding(shortcutId);
         resetCaptureState();
       } catch (error) {
         toast.error(shortcutErrorMessage(error, t));
+      } finally {
+        commitInFlightRef.current = false;
       }
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.repeat) return;
       event.preventDefault();
+      if (commitInFlightRef.current) return;
 
       if (event.key === "Escape") {
         void abortCapture();
@@ -153,6 +160,7 @@ export const GlobalShortcutInput: React.FC<GlobalShortcutInputProps> = ({
 
     const handleKeyUp = async (event: KeyboardEvent) => {
       event.preventDefault();
+      if (commitInFlightRef.current) return;
       const key = normalizeKey(getKeyName(event, osType));
       pressedKeysRef.current.delete(key);
       if (
@@ -165,6 +173,7 @@ export const GlobalShortcutInput: React.FC<GlobalShortcutInputProps> = ({
       const newShortcut = [...recordedKeysRef.current]
         .sort((a, b) => Number(MODIFIERS.has(b)) - Number(MODIFIERS.has(a)))
         .join("+");
+      commitInFlightRef.current = true;
       try {
         await updateBinding(shortcutId, newShortcut);
         // change_binding owns the successful backend capture teardown.
@@ -172,6 +181,8 @@ export const GlobalShortcutInput: React.FC<GlobalShortcutInputProps> = ({
       } catch (error) {
         toast.error(shortcutErrorMessage(error, t));
         await abortCapture();
+      } finally {
+        commitInFlightRef.current = false;
       }
     };
 
@@ -202,7 +213,8 @@ export const GlobalShortcutInput: React.FC<GlobalShortcutInputProps> = ({
   ]);
 
   const startRecording = async () => {
-    if (editing || disabled) return;
+    if (editing || disabled || startInFlightRef.current) return;
+    startInFlightRef.current = true;
     try {
       assertCommandSucceeded(await commands.suspendBinding(shortcutId));
       activeCaptureRef.current = shortcutId;
@@ -216,6 +228,8 @@ export const GlobalShortcutInput: React.FC<GlobalShortcutInputProps> = ({
       setEditing(true);
     } catch (error) {
       toast.error(shortcutErrorMessage(error, t));
+    } finally {
+      startInFlightRef.current = false;
     }
   };
 
@@ -310,6 +324,12 @@ export const GlobalShortcutInput: React.FC<GlobalShortcutInputProps> = ({
         ) : (
           <button
             type="button"
+            aria-label={t(
+              currentBinding
+                ? "settings.general.shortcut.editLabel"
+                : "settings.general.shortcut.setLabel",
+              { name },
+            )}
             disabled={busy}
             onClick={(event) => {
               event.stopPropagation();

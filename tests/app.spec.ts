@@ -231,6 +231,287 @@ async function openGeneral(
 }
 
 test.describe("independent recording shortcuts", () => {
+  for (const {
+    name,
+    postProcessEnabled,
+    transcribe,
+    postProcess,
+    cancelVisible,
+  } of [
+    {
+      name: "normal toggle assigned",
+      postProcessEnabled: false,
+      transcribe: "ctrl+alt+t",
+      postProcess: "",
+      cancelVisible: true,
+    },
+    {
+      name: "enabled post-processing toggle assigned",
+      postProcessEnabled: true,
+      transcribe: "",
+      postProcess: "ctrl+alt+p",
+      cancelVisible: true,
+    },
+    {
+      name: "disabled post-processing toggle assigned",
+      postProcessEnabled: false,
+      transcribe: "",
+      postProcess: "ctrl+alt+p",
+      cancelVisible: false,
+    },
+    {
+      name: "push-to-talk bindings only",
+      postProcessEnabled: true,
+      transcribe: "",
+      postProcess: "",
+      cancelVisible: false,
+    },
+  ] as const) {
+    test(`Cancel shortcut visibility follows usable toggle bindings: ${name}`, async ({
+      page,
+    }) => {
+      await openGeneral(page, {
+        post_process_enabled: postProcessEnabled,
+        bindings: {
+          ...settings.bindings,
+          transcribe: {
+            ...settings.bindings.transcribe,
+            current_binding: transcribe,
+          },
+          transcribe_with_post_process: {
+            ...settings.bindings.transcribe_with_post_process,
+            current_binding: postProcess,
+          },
+        },
+      });
+
+      const cancelShortcut = page.getByText("Cancel Shortcut", {
+        exact: true,
+      });
+      if (cancelVisible) {
+        await expect(cancelShortcut).toBeVisible();
+      } else {
+        await expect(cancelShortcut).toHaveCount(0);
+      }
+    });
+  }
+
+  for (const keyboardImplementation of ["tauri", "handy_keys"] as const) {
+    test(`${keyboardImplementation} gives each empty post-processing shortcut a unique accessible action`, async ({
+      page,
+    }) => {
+      await openGeneral(page, {
+        keyboard_implementation: keyboardImplementation,
+      });
+      await page.getByText("Post Process", { exact: true }).click();
+
+      await expect(
+        page.getByRole("button", {
+          name: "Set Post-Processing Shortcut",
+          exact: true,
+        }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("button", {
+          name: "Edit Push To Talk with Post-Processing Shortcut",
+          exact: true,
+        }),
+      ).toBeVisible();
+
+      await page
+        .getByRole("button", {
+          name: "Clear Push To Talk with Post-Processing Shortcut",
+          exact: true,
+        })
+        .click();
+
+      await expect(
+        page.getByRole("button", {
+          name: "Set Post-Processing Shortcut",
+          exact: true,
+        }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("button", {
+          name: "Set Push To Talk with Post-Processing Shortcut",
+          exact: true,
+        }),
+      ).toBeVisible();
+    });
+  }
+
+  test("rejected post-processing toggle rolls back the switch, sidebar, and store", async ({
+    page,
+  }) => {
+    await openGeneral(page);
+    await page.getByText("Advanced", { exact: true }).click();
+    const toggle = page
+      .locator("h3", { hasText: /^Post Processing$/ })
+      .locator("xpath=../../..")
+      .locator('input[type="checkbox"]');
+    await expect(toggle).toBeChecked();
+    await expect(page.getByText("Post Process", { exact: true })).toBeVisible();
+    await page.evaluate(() => {
+      window.__HANDY_TEST__.failures.change_post_process_enabled_setting =
+        "backend_rejected";
+    });
+
+    await toggle.locator("xpath=..").click();
+
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          window.__HANDY_TEST__.invocations.some(
+            ({ cmd }) => cmd === "change_post_process_enabled_setting",
+          ),
+        ),
+      )
+      .toBe(true);
+    await expect(toggle).toBeChecked();
+    await expect(page.getByText("Post Process", { exact: true })).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => window.__HANDY_TEST__.settings.post_process_enabled,
+      ),
+    ).toBe(true);
+  });
+
+  test("Global starts one capture while suspension is pending", async ({
+    page,
+  }) => {
+    await openGeneral(page);
+    await page.evaluate(() => {
+      window.__HANDY_TEST__.holdCommand("suspend_binding:transcribe");
+    });
+    const start = page.getByRole("button", {
+      name: "Set Transcribe Shortcut",
+      exact: true,
+    });
+
+    await start.evaluate((button) => {
+      (button as HTMLButtonElement).click();
+      (button as HTMLButtonElement).click();
+    });
+
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            window.__HANDY_TEST__.invocations.filter(
+              ({ cmd, args }) =>
+                cmd === "suspend_binding" && args.id === "transcribe",
+            ).length,
+        ),
+      )
+      .toBe(1);
+    await page.evaluate(() => {
+      window.__HANDY_TEST__.releaseCommand("suspend_binding:transcribe");
+    });
+  });
+
+  test("Handy Keys starts one capture while backend start is pending", async ({
+    page,
+  }) => {
+    await openGeneral(page, { keyboard_implementation: "handy_keys" });
+    await page.evaluate(() => {
+      window.__HANDY_TEST__.holdCommand(
+        "start_handy_keys_recording:transcribe",
+      );
+    });
+    const start = page.getByRole("button", {
+      name: "Set Transcribe Shortcut",
+      exact: true,
+    });
+
+    await start.evaluate((button) => {
+      (button as HTMLButtonElement).click();
+      (button as HTMLButtonElement).click();
+    });
+
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            window.__HANDY_TEST__.invocations.filter(
+              ({ cmd, args }) =>
+                cmd === "start_handy_keys_recording" &&
+                args.bindingId === "transcribe",
+            ).length,
+        ),
+      )
+      .toBe(1);
+    await page.evaluate(() => {
+      window.__HANDY_TEST__.releaseCommand(
+        "start_handy_keys_recording:transcribe",
+      );
+    });
+  });
+
+  test("Global commits once and ignores clear while assignment is pending", async ({
+    page,
+  }) => {
+    await openGeneral(page);
+    await page
+      .getByRole("button", {
+        name: "Set Transcribe Shortcut",
+        exact: true,
+      })
+      .click();
+    await page.evaluate(() => {
+      window.__HANDY_TEST__.holdCommand("change_binding:transcribe");
+    });
+
+    await page.keyboard.down("Control");
+    await page.keyboard.down("KeyK");
+    await page.keyboard.up("KeyK");
+    await page.keyboard.up("Control");
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            window.__HANDY_TEST__.invocations.filter(
+              ({ cmd, args }) =>
+                cmd === "change_binding" && args.id === "transcribe",
+            ).length,
+        ),
+      )
+      .toBe(1);
+
+    await page.evaluate(() => {
+      window.dispatchEvent(
+        new KeyboardEvent("keyup", { key: "Control", code: "ControlLeft" }),
+      );
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Delete", code: "Delete" }),
+      );
+    });
+    expect(
+      await page.evaluate(
+        () =>
+          window.__HANDY_TEST__.invocations.filter(
+            ({ cmd, args }) =>
+              cmd === "change_binding" && args.id === "transcribe",
+          ).length,
+      ),
+    ).toBe(1);
+    expect(
+      await page.evaluate(
+        () =>
+          window.__HANDY_TEST__.invocations.filter(
+            ({ cmd, args }) =>
+              cmd === "clear_binding" && args.id === "transcribe",
+          ).length,
+      ),
+    ).toBe(0);
+
+    await page.evaluate(() => {
+      window.__HANDY_TEST__.releaseCommand("change_binding:transcribe");
+    });
+    await expect(page.getByTestId("shortcut-capture-transcribe")).toHaveCount(
+      0,
+    );
+  });
+
   test("renders both normal shortcut actions and a real Set shortcut button", async ({
     page,
   }) => {
@@ -242,7 +523,10 @@ test.describe("independent recording shortcuts", () => {
     await expect(
       page.getByText("Push To Talk Shortcut", { exact: true }),
     ).toBeVisible();
-    const setShortcut = page.getByRole("button", { name: "Set shortcut" });
+    const setShortcut = page.getByRole("button", {
+      name: "Set Transcribe Shortcut",
+      exact: true,
+    });
     await expect(setShortcut).toBeVisible();
     await setShortcut.focus();
     await expect(setShortcut).toBeFocused();
@@ -253,7 +537,10 @@ test.describe("independent recording shortcuts", () => {
   }) => {
     await openGeneral(page);
 
-    const setShortcut = page.getByRole("button", { name: "Set shortcut" });
+    const setShortcut = page.getByRole("button", {
+      name: "Set Transcribe Shortcut",
+      exact: true,
+    });
     await setShortcut.focus();
     await page.keyboard.press("Enter");
     await expect(
@@ -276,7 +563,10 @@ test.describe("independent recording shortcuts", () => {
   test("activates an empty shortcut with Space", async ({ page }) => {
     await openGeneral(page);
 
-    const setShortcut = page.getByRole("button", { name: "Set shortcut" });
+    const setShortcut = page.getByRole("button", {
+      name: "Set Transcribe Shortcut",
+      exact: true,
+    });
     await setShortcut.focus();
     await page.keyboard.press("Space");
     await expect(
@@ -295,7 +585,9 @@ test.describe("independent recording shortcuts", () => {
             cmd === "abort_shortcut_capture" && args.id === "transcribe",
         ).length,
     );
-    await page.getByRole("button", { name: "Set shortcut" }).click();
+    await page
+      .getByRole("button", { name: "Set Transcribe Shortcut", exact: true })
+      .click();
     await page.keyboard.press("Control+KeyK");
 
     await expect
@@ -330,7 +622,9 @@ test.describe("independent recording shortcuts", () => {
             cmd === "abort_shortcut_capture" && args.id === "transcribe",
         ).length,
     );
-    await page.getByRole("button", { name: "Set shortcut" }).click();
+    await page
+      .getByRole("button", { name: "Set Transcribe Shortcut", exact: true })
+      .click();
     await page.getByText("Post Process", { exact: true }).click();
 
     await expect
@@ -350,7 +644,9 @@ test.describe("independent recording shortcuts", () => {
     page,
   }) => {
     await openGeneral(page);
-    await page.getByRole("button", { name: "Set shortcut" }).click();
+    await page
+      .getByRole("button", { name: "Set Transcribe Shortcut", exact: true })
+      .click();
     await page.evaluate(() => {
       window.__HANDY_TEST__.failures.abort_shortcut_capture =
         "temporary_failure";
@@ -366,7 +662,10 @@ test.describe("independent recording shortcuts", () => {
     });
     await page.getByText("General", { exact: true }).first().click();
     await expect(
-      page.getByRole("button", { name: "Set shortcut" }),
+      page.getByRole("button", {
+        name: "Set Transcribe Shortcut",
+        exact: true,
+      }),
     ).toBeVisible();
   });
 
@@ -374,7 +673,9 @@ test.describe("independent recording shortcuts", () => {
     page,
   }) => {
     await openGeneral(page);
-    await page.getByRole("button", { name: "Set shortcut" }).click();
+    await page
+      .getByRole("button", { name: "Set Transcribe Shortcut", exact: true })
+      .click();
     const beforePagehide = await page.evaluate(
       () =>
         window.__HANDY_TEST__.invocations.filter(
@@ -497,8 +798,17 @@ test.describe("independent recording shortcuts", () => {
     await expect(clear).toBeVisible();
     await clear.click();
     await expect(
-      page.getByRole("button", { name: "Set shortcut" }),
-    ).toHaveCount(2);
+      page.getByRole("button", {
+        name: "Set Transcribe Shortcut",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", {
+        name: "Set Push To Talk Shortcut",
+        exact: true,
+      }),
+    ).toBeVisible();
     expect(
       await page.evaluate(() =>
         window.__HANDY_TEST__.invocations.some(
@@ -515,7 +825,7 @@ test.describe("independent recording shortcuts", () => {
     await openGeneral(page);
 
     await page
-      .getByRole("button", { name: /Ctrl.*Space/i })
+      .getByRole("button", { name: "Edit Push To Talk Shortcut" })
       .first()
       .click();
     await page.keyboard.press("Delete");
@@ -537,7 +847,7 @@ test.describe("independent recording shortcuts", () => {
   }) => {
     await openGeneral(page);
     await page
-      .getByRole("button", { name: /Ctrl.*Space/i })
+      .getByRole("button", { name: "Edit Push To Talk Shortcut" })
       .first()
       .click();
     await page.keyboard.press("Backspace");
@@ -559,7 +869,9 @@ test.describe("independent recording shortcuts", () => {
     await page.evaluate(() => {
       window.__HANDY_TEST__.failures.suspend_binding = "recording_in_progress";
     });
-    await page.getByRole("button", { name: "Set shortcut" }).click();
+    await page
+      .getByRole("button", { name: "Set Transcribe Shortcut", exact: true })
+      .click();
 
     await expect(
       page.getByText(
@@ -579,7 +891,9 @@ test.describe("independent recording shortcuts", () => {
     await page.evaluate(() => {
       window.__HANDY_TEST__.holdCommand("suspend_binding:transcribe");
     });
-    await page.getByRole("button", { name: "Set shortcut" }).click();
+    await page
+      .getByRole("button", { name: "Set Transcribe Shortcut", exact: true })
+      .click();
     await expect
       .poll(() =>
         page.evaluate(
@@ -626,7 +940,9 @@ test.describe("independent recording shortcuts", () => {
 
   test("Global capture exposes an announced status", async ({ page }) => {
     await openGeneral(page);
-    await page.getByRole("button", { name: "Set shortcut" }).click();
+    await page
+      .getByRole("button", { name: "Set Transcribe Shortcut", exact: true })
+      .click();
 
     const capture = page.getByRole("status");
     await expect(capture).toHaveText("Press keys...");
@@ -641,7 +957,9 @@ test.describe("independent recording shortcuts", () => {
       window.__HANDY_TEST__.failures.start_handy_keys_recording =
         "recording_in_progress";
     });
-    await page.getByRole("button", { name: "Set shortcut" }).click();
+    await page
+      .getByRole("button", { name: "Set Transcribe Shortcut", exact: true })
+      .click();
 
     await expect(
       page.getByText(
@@ -663,7 +981,9 @@ test.describe("independent recording shortcuts", () => {
         "start_handy_keys_recording:transcribe",
       );
     });
-    await page.getByRole("button", { name: "Set shortcut" }).click();
+    await page
+      .getByRole("button", { name: "Set Transcribe Shortcut", exact: true })
+      .click();
     await expect
       .poll(() =>
         page.evaluate(
@@ -710,7 +1030,9 @@ test.describe("independent recording shortcuts", () => {
 
   test("Handy Keys capture exposes an announced status", async ({ page }) => {
     await openGeneral(page, { keyboard_implementation: "handy_keys" });
-    await page.getByRole("button", { name: "Set shortcut" }).click();
+    await page
+      .getByRole("button", { name: "Set Transcribe Shortcut", exact: true })
+      .click();
 
     const capture = page.getByRole("status");
     await expect(capture).toHaveText("Press keys...");
@@ -721,7 +1043,9 @@ test.describe("independent recording shortcuts", () => {
     page,
   }) => {
     await openGeneral(page, { keyboard_implementation: "handy_keys" });
-    await page.getByRole("button", { name: "Set shortcut" }).click();
+    await page
+      .getByRole("button", { name: "Set Transcribe Shortcut", exact: true })
+      .click();
     await page.evaluate(() => {
       window.__HANDY_TEST__.emit("handy-keys-event", {
         modifiers: ["ctrl"],
@@ -774,8 +1098,7 @@ test.describe("independent recording shortcuts", () => {
       },
     });
     await page
-      .getByRole("button", { name: /Alt.*Space/i })
-      .first()
+      .getByRole("button", { name: "Edit Transcribe Shortcut", exact: true })
       .click();
     await page.evaluate(() => {
       window.__HANDY_TEST__.delays.change_binding = 100;
@@ -823,7 +1146,9 @@ test.describe("independent recording shortcuts", () => {
     page,
   }) => {
     await openGeneral(page, { keyboard_implementation: "handy_keys" });
-    await page.getByRole("button", { name: "Set shortcut" }).click();
+    await page
+      .getByRole("button", { name: "Set Transcribe Shortcut", exact: true })
+      .click();
     await page.evaluate(() => {
       window.__HANDY_TEST__.failures.stop_handy_keys_recording =
         "temporary_failure";
@@ -836,7 +1161,10 @@ test.describe("independent recording shortcuts", () => {
     });
     await page.getByText("General", { exact: true }).first().click();
     await expect(
-      page.getByRole("button", { name: "Set shortcut" }),
+      page.getByRole("button", {
+        name: "Set Transcribe Shortcut",
+        exact: true,
+      }),
     ).toBeVisible();
   });
 
@@ -844,7 +1172,9 @@ test.describe("independent recording shortcuts", () => {
     page,
   }) => {
     await openGeneral(page, { keyboard_implementation: "handy_keys" });
-    await page.getByRole("button", { name: "Set shortcut" }).click();
+    await page
+      .getByRole("button", { name: "Set Transcribe Shortcut", exact: true })
+      .click();
     await page.evaluate(() => {
       window.__HANDY_TEST__.failures.stop_handy_keys_recording =
         "temporary_failure";
@@ -892,7 +1222,7 @@ test.describe("independent recording shortcuts", () => {
     }) => {
       await openGeneral(page, { keyboard_implementation: "handy_keys" });
       await page
-        .getByRole("button", { name: /Ctrl.*Space/i })
+        .getByRole("button", { name: "Edit Push To Talk Shortcut" })
         .first()
         .click();
       const stopsBefore = await page.evaluate(
@@ -934,7 +1264,9 @@ test.describe("independent recording shortcuts", () => {
     page,
   }) => {
     await openGeneral(page, { keyboard_implementation: "handy_keys" });
-    await page.getByRole("button", { name: "Set shortcut" }).click();
+    await page
+      .getByRole("button", { name: "Set Transcribe Shortcut", exact: true })
+      .click();
     await expect
       .poll(() =>
         page.evaluate(
@@ -1040,7 +1372,9 @@ test.describe("independent recording shortcuts", () => {
             args.event === "handy-keys-event",
         ).length,
     );
-    await page.getByRole("button", { name: "Set shortcut" }).click();
+    await page
+      .getByRole("button", { name: "Set Transcribe Shortcut", exact: true })
+      .click();
     await expect
       .poll(() =>
         page.evaluate(

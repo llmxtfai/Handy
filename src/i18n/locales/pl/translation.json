@@ -179,6 +179,8 @@
       "title": "Ogólne",
       "shortcut": {
         "set": "Ustaw skrót",
+        "setLabel": "Ustaw {{name}}",
+        "editLabel": "Edytuj {{name}}",
         "clear": "Wyczyść {{name}}",
         "reset": "Zresetuj {{name}}",
         "title": "Skróty Handy",
@@ -384,7 +386,7 @@
     },
     "postProcessing": {
       "hotkey": {
-        "title": "Skrót klawiszowy"
+        "title": "Skróty klawiszowe"
       },
       "api": {
         "title": "API (zgodne z OpenAI)",
@@ -521,8 +523,7 @@
       },
       "keyboardImplementation": {
         "title": "Implementacja klawiatury",
-        "description": "Wybierz backend dla skrótów klawiaturowych.",
-        "bindingsReset": "Skróty klawiaturowe były niekompatybilne i zostały zresetowane do wartości domyślnych"
+        "description": "Wybierz backend dla skrótów klawiaturowych."
       },
       "paths": {
         "appData": "Dane aplikacji:",

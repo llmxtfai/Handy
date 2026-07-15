@@ -179,6 +179,8 @@
       "title": "Generale",
       "shortcut": {
         "set": "Imposta scorciatoia",
+        "setLabel": "Imposta {{name}}",
+        "editLabel": "Modifica {{name}}",
         "clear": "Cancella {{name}}",
         "reset": "Reimposta {{name}}",
         "title": "Scorciatoie di Handy",
@@ -384,7 +386,7 @@
     },
     "postProcessing": {
       "hotkey": {
-        "title": "Tasto di scelta rapida"
+        "title": "Scorciatoie da tastiera"
       },
       "api": {
         "title": "API (Compatibile con OpenAI)",
@@ -521,8 +523,7 @@
       },
       "keyboardImplementation": {
         "title": "Implementazione tastiera",
-        "description": "Scegli il backend per le scorciatoie da tastiera.",
-        "bindingsReset": "Le scorciatoie da tastiera erano incompatibili e sono state ripristinate ai valori predefiniti"
+        "description": "Scegli il backend per le scorciatoie da tastiera."
       },
       "paths": {
         "appData": "Dati App:",

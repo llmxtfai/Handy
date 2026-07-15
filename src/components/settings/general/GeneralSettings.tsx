@@ -14,8 +14,13 @@ import { ModelSettingsCard } from "./ModelSettingsCard";
 export const GeneralSettings: React.FC = () => {
   const { t } = useTranslation();
   const { audioFeedbackEnabled, getSetting } = useSettings();
-  const transcribeBinding =
-    getSetting("bindings")?.transcribe?.current_binding.trim();
+  const bindings = getSetting("bindings");
+  const postProcessEnabled = getSetting("post_process_enabled");
+  const hasUsableToggleBinding = Boolean(
+    bindings?.transcribe?.current_binding.trim() ||
+      (postProcessEnabled &&
+        bindings?.transcribe_with_post_process?.current_binding.trim()),
+  );
   const isLinux = type() === "linux";
   return (
     <div className="max-w-3xl w-full mx-auto space-y-6">
@@ -24,7 +29,7 @@ export const GeneralSettings: React.FC = () => {
         <ShortcutInput shortcutId="push_to_talk" grouped={true} clearable />
         {/* Toggle recordings need an explicit cancel action. Linux keeps the
             existing omission because dynamic cancel registration is unstable. */}
-        {!isLinux && Boolean(transcribeBinding) && (
+        {!isLinux && hasUsableToggleBinding && (
           <ShortcutInput shortcutId="cancel" grouped={true} />
         )}
       </SettingsGroup>

@@ -167,6 +167,8 @@
         "notFound": "Shortcut not found",
         "pressKeys": "Press keys...",
         "set": "Set shortcut",
+        "setLabel": "Set {{name}}",
+        "editLabel": "Edit {{name}}",
         "clear": "Clear {{name}}",
         "reset": "Reset {{name}}",
         "bindings": {
@@ -384,7 +386,7 @@
     },
     "postProcessing": {
       "hotkey": {
-        "title": "Hotkey"
+        "title": "Shortcuts"
       },
       "api": {
         "title": "API (OpenAI Compatible)",
@@ -528,8 +530,7 @@
       },
       "keyboardImplementation": {
         "title": "Keyboard Implementation",
-        "description": "Choose the keyboard shortcut backend.",
-        "bindingsReset": "Keyboard shortcuts were incompatible and reset to defaults"
+        "description": "Choose the keyboard shortcut backend."
       },
       "paths": {
         "appData": "App Data:",

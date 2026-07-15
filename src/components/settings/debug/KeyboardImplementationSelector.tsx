@@ -39,11 +39,6 @@ export const KeyboardImplementationSelector: React.FC<
         return;
       }
 
-      // If any bindings were reset due to incompatibility, notify the user
-      if (result.data.reset_bindings.length > 0) {
-        toast.warning(t("settings.debug.keyboardImplementation.bindingsReset"));
-      }
-
       await refreshSettings();
     } catch (error) {
       console.error("Failed to update keyboard implementation:", error);

@@ -179,6 +179,8 @@
       "title": "Chung",
       "shortcut": {
         "set": "Đặt phím tắt",
+        "setLabel": "Đặt {{name}}",
+        "editLabel": "Chỉnh sửa {{name}}",
         "clear": "Xóa {{name}}",
         "reset": "Đặt lại {{name}}",
         "title": "Phím tắt Handy",
@@ -521,8 +523,7 @@
       },
       "keyboardImplementation": {
         "title": "Triển khai bàn phím",
-        "description": "Chọn hệ thống xử lý phím tắt.",
-        "bindingsReset": "Các phím tắt không tương thích và đã được đặt lại về mặc định"
+        "description": "Chọn hệ thống xử lý phím tắt."
       },
       "paths": {
         "appData": "Dữ liệu ứng dụng:",

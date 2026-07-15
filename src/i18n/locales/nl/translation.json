@@ -161,6 +161,8 @@
       "title": "Algemeen",
       "shortcut": {
         "set": "Sneltoets instellen",
+        "setLabel": "{{name}} instellen",
+        "editLabel": "{{name}} bewerken",
         "clear": "{{name}} wissen",
         "reset": "{{name}} herstellen",
         "title": "Sneltoetsen",
@@ -384,7 +386,7 @@
     },
     "postProcessing": {
       "hotkey": {
-        "title": "Sneltoets"
+        "title": "Sneltoetsen"
       },
       "api": {
         "title": "API (OpenAI-compatibel)",
@@ -528,8 +530,7 @@
       },
       "keyboardImplementation": {
         "title": "Toetsenbord-implementatie",
-        "description": "Kies de backend voor sneltoetsen.",
-        "bindingsReset": "Sneltoetsen waren incompatibel en zijn teruggezet naar de standaardwaarden"
+        "description": "Kies de backend voor sneltoetsen."
       },
       "paths": {
         "appData": "App-data:",

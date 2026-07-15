@@ -179,6 +179,8 @@
       "title": "General",
       "shortcut": {
         "set": "Asignar atajo",
+        "setLabel": "Asignar {{name}}",
+        "editLabel": "Editar {{name}}",
         "clear": "Borrar {{name}}",
         "reset": "Restablecer {{name}}",
         "title": "Atajos de Handy",
@@ -384,7 +386,7 @@
     },
     "postProcessing": {
       "hotkey": {
-        "title": "Tecla de acceso rápido"
+        "title": "Atajos de teclado"
       },
       "api": {
         "title": "API (Compatible con OpenAI)",
@@ -521,8 +523,7 @@
       },
       "keyboardImplementation": {
         "title": "Implementación del teclado",
-        "description": "Elige el sistema que gestiona los atajos de teclado.",
-        "bindingsReset": "Los atajos de teclado eran incompatibles y se restablecieron a los valores predeterminados"
+        "description": "Elige el sistema que gestiona los atajos de teclado."
       },
       "paths": {
         "appData": "Datos de la Aplicación:",

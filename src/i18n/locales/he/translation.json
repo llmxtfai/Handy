@@ -161,6 +161,8 @@
       "title": "כללי",
       "shortcut": {
         "set": "הגדרת קיצור מקשים",
+        "setLabel": "הגדרת {{name}}",
+        "editLabel": "עריכת {{name}}",
         "clear": "ניקוי {{name}}",
         "reset": "איפוס {{name}}",
         "title": "קיצורי מקשים של Handy",
@@ -384,7 +386,7 @@
     },
     "postProcessing": {
       "hotkey": {
-        "title": "קיצור מקשים"
+        "title": "קיצורי מקשים"
       },
       "api": {
         "title": "API (תואם OpenAI)",
@@ -521,8 +523,7 @@
       },
       "keyboardImplementation": {
         "title": "מימוש מקלדת",
-        "description": "בחר את מנגנון קיצורי המקלדת.",
-        "bindingsReset": "קיצורי המקלדת לא היו תואמים ואופסו לברירות המחדל"
+        "description": "בחר את מנגנון קיצורי המקלדת."
       },
       "paths": {
         "appData": "נתוני אפליקציה:",

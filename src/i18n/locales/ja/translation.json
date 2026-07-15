@@ -179,6 +179,8 @@
       "title": "一般",
       "shortcut": {
         "set": "ショートカットを設定",
+        "setLabel": "{{name}}を設定",
+        "editLabel": "{{name}}を編集",
         "clear": "{{name}}を消去",
         "reset": "{{name}}をリセット",
         "title": "Handy ショートカット",
@@ -521,8 +523,7 @@
       },
       "keyboardImplementation": {
         "title": "キーボード実装",
-        "description": "キーボードショートカットのバックエンドを選択してください。",
-        "bindingsReset": "キーボードショートカットに互換性がなかったため、デフォルトにリセットされました"
+        "description": "キーボードショートカットのバックエンドを選択してください。"
       },
       "paths": {
         "appData": "アプリデータ:",

@@ -179,6 +179,8 @@
       "title": "Obecné",
       "shortcut": {
         "set": "Nastavit zkratku",
+        "setLabel": "Nastavit {{name}}",
+        "editLabel": "Upravit {{name}}",
         "clear": "Vymazat {{name}}",
         "reset": "Obnovit {{name}}",
         "title": "Zkratky Handy",
@@ -384,7 +386,7 @@
     },
     "postProcessing": {
       "hotkey": {
-        "title": "Klávesová zkratka"
+        "title": "Klávesové zkratky"
       },
       "api": {
         "title": "API (kompatibilní s OpenAI)",
@@ -521,8 +523,7 @@
       },
       "keyboardImplementation": {
         "title": "Implementace klávesnice",
-        "description": "Zvolte backend pro klávesové zkratky.",
-        "bindingsReset": "Klávesové zkratky byly nekompatibilní a byly obnoveny na výchozí hodnoty"
+        "description": "Zvolte backend pro klávesové zkratky."
       },
       "paths": {
         "appData": "Data aplikace:",

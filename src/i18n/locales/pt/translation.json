@@ -161,6 +161,8 @@
       "title": "Geral",
       "shortcut": {
         "set": "Definir atalho",
+        "setLabel": "Definir {{name}}",
+        "editLabel": "Editar {{name}}",
         "clear": "Limpar {{name}}",
         "reset": "Redefinir {{name}}",
         "title": "Atalhos do Handy",
@@ -384,7 +386,7 @@
     },
     "postProcessing": {
       "hotkey": {
-        "title": "Tecla de atalho"
+        "title": "Atalhos de teclado"
       },
       "api": {
         "title": "API (Compatível com OpenAI)",
@@ -521,8 +523,7 @@
       },
       "keyboardImplementation": {
         "title": "Implementação do Teclado",
-        "description": "Escolha o sistema responsável pelos atalhos de teclado.",
-        "bindingsReset": "Os atalhos de teclado eram incompatíveis e foram redefinidos para os padrões"
+        "description": "Escolha o sistema responsável pelos atalhos de teclado."
       },
       "paths": {
         "appData": "Dados do App:",

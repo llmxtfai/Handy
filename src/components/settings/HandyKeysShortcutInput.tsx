@@ -49,6 +49,7 @@ export const HandyKeysShortcutInput: React.FC<HandyKeysShortcutInputProps> = ({
   const captureRef = useRef<HTMLDivElement>(null);
   const activeCaptureRef = useRef(false);
   const mountedRef = useRef(false);
+  const startInFlightRef = useRef(false);
   const pendingTeardownRef = useRef(false);
   const commitInFlightRef = useRef(false);
   const stopInFlightRef = useRef<Promise<boolean> | null>(null);
@@ -202,7 +203,8 @@ export const HandyKeysShortcutInput: React.FC<HandyKeysShortcutInputProps> = ({
   }, [isRecording, stopCapture]);
 
   const startRecording = async () => {
-    if (isRecording || disabled) return;
+    if (isRecording || disabled || startInFlightRef.current) return;
+    startInFlightRef.current = true;
     try {
       assertCommandSucceeded(
         await commands.startHandyKeysRecording(shortcutId),
@@ -218,6 +220,8 @@ export const HandyKeysShortcutInput: React.FC<HandyKeysShortcutInputProps> = ({
       setIsRecording(true);
     } catch (error) {
       toast.error(shortcutErrorMessage(error, t));
+    } finally {
+      startInFlightRef.current = false;
     }
   };
 
@@ -308,6 +312,12 @@ export const HandyKeysShortcutInput: React.FC<HandyKeysShortcutInputProps> = ({
         ) : (
           <button
             type="button"
+            aria-label={t(
+              currentBinding
+                ? "settings.general.shortcut.editLabel"
+                : "settings.general.shortcut.setLabel",
+              { name },
+            )}
             disabled={busy}
             onClick={(event) => {
               event.stopPropagation();

@@ -179,6 +179,8 @@
       "title": "Genel",
       "shortcut": {
         "set": "Kısayol ayarla",
+        "setLabel": "{{name}} kısayolunu ayarla",
+        "editLabel": "{{name}} kısayolunu düzenle",
         "clear": "{{name}} kısayolunu temizle",
         "reset": "{{name}} kısayolunu sıfırla",
         "title": "Handy Kısayolları",
@@ -384,7 +386,7 @@
     },
     "postProcessing": {
       "hotkey": {
-        "title": "Kısayol Tuşu"
+        "title": "Klavye kısayolları"
       },
       "api": {
         "title": "API (OpenAI Uyumlu)",
@@ -521,8 +523,7 @@
       },
       "keyboardImplementation": {
         "title": "Klavye Uygulaması",
-        "description": "Klavye kısayolları için kullanılacak altyapıyı seçin.",
-        "bindingsReset": "Klavye kısayolları uyumsuzdu ve varsayılan ayarlara sıfırlandı"
+        "description": "Klavye kısayolları için kullanılacak altyapıyı seçin."
       },
       "paths": {
         "appData": "Uygulama Verileri:",

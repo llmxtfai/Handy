@@ -161,6 +161,8 @@
       "title": "सामान्य",
       "shortcut": {
         "set": "सर्टकट सेट गर्नुहोस्",
+        "setLabel": "{{name}} सेट गर्नुहोस्",
+        "editLabel": "{{name}} सम्पादन गर्नुहोस्",
         "clear": "{{name}} हटाउनुहोस्",
         "reset": "{{name}} रिसेट गर्नुहोस्",
         "title": "Handy सर्टकटहरू",
@@ -384,7 +386,7 @@
     },
     "postProcessing": {
       "hotkey": {
-        "title": "हटकी"
+        "title": "सर्टकटहरू"
       },
       "api": {
         "title": "API (OpenAI अनुकूल)",
@@ -528,8 +530,7 @@
       },
       "keyboardImplementation": {
         "title": "किबोर्ड कार्यान्वयन",
-        "description": "किबोर्ड सर्टकट ब्याकइन्ड छान्नुहोस्।",
-        "bindingsReset": "किबोर्ड सर्टकटहरू असंगत भएकाले डिफल्टमा रिसेट गरियो"
+        "description": "किबोर्ड सर्टकट ब्याकइन्ड छान्नुहोस्।"
       },
       "paths": {
         "appData": "एप डेटा:",

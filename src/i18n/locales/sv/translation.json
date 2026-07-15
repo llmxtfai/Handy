@@ -161,6 +161,8 @@
       "title": "Allmänt",
       "shortcut": {
         "set": "Ange kortkommando",
+        "setLabel": "Ange {{name}}",
+        "editLabel": "Redigera {{name}}",
         "clear": "Rensa {{name}}",
         "reset": "Återställ {{name}}",
         "title": "Handy-kortkommandon",
@@ -384,7 +386,7 @@
     },
     "postProcessing": {
       "hotkey": {
-        "title": "Snabbkommando"
+        "title": "Kortkommandon"
       },
       "api": {
         "title": "API (OpenAI-kompatibelt)",
@@ -521,8 +523,7 @@
       },
       "keyboardImplementation": {
         "title": "Tangentbordsimplementering",
-        "description": "Välj tangentbordsgenvägens implementation.",
-        "bindingsReset": "Kortkommandona var inkompatibla och återställdes till standardvärden"
+        "description": "Välj tangentbordsgenvägens implementation."
       },
       "paths": {
         "appData": "Appdata:",
