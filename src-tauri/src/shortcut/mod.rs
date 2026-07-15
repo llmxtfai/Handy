@@ -276,7 +276,7 @@ fn unregister_all_shortcuts(
     })
 }
 
-/// Register all shortcuts for a specific implementation, validating and resetting invalid ones
+/// Register every assigned shortcut supported by the selected implementation.
 fn register_all_shortcuts_for_implementation(
     app: &AppHandle,
     bindings: &std::collections::HashMap<String, ShortcutBinding>,
