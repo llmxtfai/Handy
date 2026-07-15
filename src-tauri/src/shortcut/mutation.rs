@@ -160,6 +160,15 @@ pub(super) fn restore_capture_binding(
         .map_err(|error| format!("shortcut_capture_restoration_failed: {error}"))
 }
 
+pub(super) fn suspend_capture_binding(
+    backend: &mut impl BindingBackend,
+    binding: &ShortcutBinding,
+) -> Result<(), String> {
+    backend
+        .unregister(binding)
+        .map_err(|error| format!("shortcut_capture_suspend_failed: {error}"))
+}
+
 pub(super) fn replace_registered_binding(
     backend: &mut impl BindingBackend,
     old: &ShortcutBinding,
@@ -329,22 +338,11 @@ pub(super) fn begin_shortcut_capture(
             settings.post_process_enabled,
             &binding.current_binding,
         ) {
-            if let Err(error) = unregister_shortcut_for_implementation(
+            let mut backend = AppBindingBackend {
                 app,
-                binding.clone(),
-                settings.keyboard_implementation,
-            ) {
-                return match register_shortcut_for_implementation(
-                    app,
-                    binding.clone(),
-                    settings.keyboard_implementation,
-                ) {
-                    Ok(()) => Err(format!("shortcut_capture_suspend_failed: {error}")),
-                    Err(restoration) => Err(format!(
-                        "shortcut_capture_restoration_failed: suspend={error}; restoration={restoration}"
-                    )),
-                };
-            }
+                implementation: settings.keyboard_implementation,
+            };
+            suspend_capture_binding(&mut backend, binding)?;
         }
     }
 
@@ -970,5 +968,20 @@ mod tests {
             registration_cleanup_error("duplicate", &["cleanup".into()]),
             "handy_keys_init_cleanup_failed: registration=duplicate; cleanup=cleanup"
         );
+    }
+
+    #[test]
+    fn capture_suspend_failure_does_not_reregister_a_binding_that_may_still_be_live() {
+        let captured = binding("transcribe", "ctrl+space", "");
+        let mut backend = FakeBackend {
+            fail_unregister: Some(captured.current_binding.clone()),
+            ..Default::default()
+        };
+
+        assert_eq!(
+            suspend_capture_binding(&mut backend, &captured),
+            Err("shortcut_capture_suspend_failed: unregister failed".into())
+        );
+        assert_eq!(backend.calls, vec!["unregister:transcribe"]);
     }
 }
